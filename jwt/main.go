@@ -16,10 +16,11 @@ var (
 
 type Claims struct {
 	Username string `json:"username"`
+	UserID   int32  `json:"userId"`
 	jwt.RegisteredClaims
 }
 
-func GenerateTokens(username string) (string, string, time.Time, error) {
+func GenerateTokens(username string, userId int32) (string, string, time.Time, error) {
 	accessExp := time.Now().Add(4 * time.Hour)
 	claims := Claims{
 		Username: username,

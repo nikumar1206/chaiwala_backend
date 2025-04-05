@@ -1,22 +1,22 @@
 package users
 
 type RegisterUser struct {
-	Username string
-	Password string
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type LoginUser struct {
-	Username string
-	Password string
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type GeneratedJWTResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int64  `json:"expires_in"`
-	TokenType    string `json:"token_type"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    int64  `json:"expiresIn"`
+	TokenType    string `json:"tokenType"`
 }
 
 type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refreshToken"`
 }

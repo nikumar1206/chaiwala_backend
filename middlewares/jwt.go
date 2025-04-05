@@ -24,6 +24,7 @@ func JWT() fiber.Handler {
 			return fiber.NewError(http.StatusUnauthorized, err.Error())
 		}
 		c.Locals("username", claims.Username)
+		c.Locals("userId", claims.UserID)
 
 		return c.Next()
 	}

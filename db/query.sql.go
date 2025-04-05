@@ -218,6 +218,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteComment = `-- name: DeleteComment :exec
+DELETE FROM recipe_comments
+WHERE id = $1
+`
+
+func (q *Queries) DeleteComment(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, deleteComment, id)
+	return err
+}
+
 const deleteRecipe = `-- name: DeleteRecipe :exec
 DELETE FROM recipes
 WHERE id = $1
@@ -357,6 +367,38 @@ func (q *Queries) ListComments(ctx context.Context, recipeID pgtype.Int4) ([]Lis
 			&i.CreatedAt,
 			&i.Username,
 			&i.AvatarUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCommentsByUser = `-- name: ListCommentsByUser :many
+SELECT id, recipe_id, user_id, comment, created_at FROM recipe_comments
+WHERE user_id = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListCommentsByUser(ctx context.Context, userID pgtype.Int4) ([]RecipeComment, error) {
+	rows, err := q.db.Query(ctx, listCommentsByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RecipeComment
+	for rows.Next() {
+		var i RecipeComment
+		if err := rows.Scan(
+			&i.ID,
+			&i.RecipeID,
+			&i.UserID,
+			&i.Comment,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -606,6 +648,22 @@ type UnfavoriteRecipeParams struct {
 
 func (q *Queries) UnfavoriteRecipe(ctx context.Context, arg UnfavoriteRecipeParams) error {
 	_, err := q.db.Exec(ctx, unfavoriteRecipe, arg.UserID, arg.RecipeID)
+	return err
+}
+
+const updateComment = `-- name: UpdateComment :exec
+UPDATE recipe_comments
+SET comment = $2
+WHERE id = $1
+`
+
+type UpdateCommentParams struct {
+	ID      int32
+	Comment string
+}
+
+func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) error {
+	_, err := q.db.Exec(ctx, updateComment, arg.ID, arg.Comment)
 	return err
 }
 

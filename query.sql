@@ -119,6 +119,20 @@ JOIN users u ON rc.user_id = u.id
 WHERE rc.recipe_id = $1
 ORDER BY rc.created_at DESC;
 
+-- name: ListCommentsByUser :many
+SELECT * FROM recipe_comments
+WHERE user_id = $1
+ORDER BY created_at DESC;
+
+-- name: UpdateComment :exec
+UPDATE recipe_comments
+SET comment = $2
+WHERE id = $1;
+
+-- name: DeleteComment :exec
+DELETE FROM recipe_comments
+WHERE id = $1;
+
 -- name: FavoriteRecipe :exec
 INSERT INTO favorites (user_id, recipe_id)
 VALUES ($1, $2)

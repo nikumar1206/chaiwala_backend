@@ -15,13 +15,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func BuildRouter(app *fiber.App, db *db.Queries) *fiber.Router {
+func BuildRouter(app *fiber.App, dbConn *db.Queries) *fiber.Router {
 	userRouter := app.Group("/users")
 
-	userRouter.Get("", buildGetUser(db))
-	userRouter.Post("/register", buildRegisterUser(db))
-	userRouter.Post("/login", buildLoginUser(db))
-	userRouter.Post("/refresh", buildRefreshRoute(db))
+	userRouter.Get("", buildGetUser(dbConn))
+	userRouter.Post("/register", buildRegisterUser(dbConn))
+	userRouter.Post("/login", buildLoginUser(dbConn))
+	userRouter.Post("/refresh", buildRefreshRoute(dbConn))
 
 	return &userRouter
 }
@@ -34,9 +34,9 @@ type Body struct {
 	} `json:"slideshow"`
 }
 
-func buildGetUser(db *db.Queries) fiber.Handler {
+func buildGetUser(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		usr, err := db.GetUser(c.Context(), 1)
+		usr, err := dbConn.GetUser(c.Context(), 1)
 		if err != nil {
 			fmt.Print(err)
 			return c.JSON(common.Error{
@@ -90,7 +90,7 @@ func buildRegisterUser(dbConn *db.Queries) fiber.Handler {
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
-		at, rt, exp, err := jwt.GenerateTokens(usr.Username)
+		at, rt, exp, err := jwt.GenerateTokens(usr.Username, usr.ID)
 		if err != nil {
 			c.Status(500)
 			return c.JSON(common.Error{
@@ -109,13 +109,13 @@ func buildRegisterUser(dbConn *db.Queries) fiber.Handler {
 	}
 }
 
-func buildLoginUser(db *db.Queries) fiber.Handler {
+func buildLoginUser(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		u := new(LoginUser)
 		if err := c.Bind().JSON(u); err != nil {
 			return err
 		}
-		usr, err := db.GetUserByUsername(c.Context(), u.Username)
+		usr, err := dbConn.GetUserByUsername(c.Context(), u.Username)
 		if err != nil {
 			fmt.Print(err)
 			c.Status(http.StatusNotFound)
@@ -136,7 +136,7 @@ func buildLoginUser(db *db.Queries) fiber.Handler {
 			})
 		}
 
-		at, rt, exp, err := jwt.GenerateTokens(usr.Username)
+		at, rt, exp, err := jwt.GenerateTokens(usr.Username, usr.ID)
 		if err != nil {
 			c.Status(500)
 			return c.JSON(common.Error{
@@ -172,8 +172,9 @@ func buildRefreshRoute(dbConn *db.Queries) fiber.Handler {
 			})
 
 		}
-		// need to revoke previous Refresh
-		newAccess, newRefresh, exp, err := jwt.GenerateTokens(claims.Username)
+
+		// todo(nick): need to revoke previous Refresh
+		newAccess, newRefresh, exp, err := jwt.GenerateTokens(claims.Username, claims.UserID)
 		if err != nil {
 			c.Status(500)
 			return c.JSON(common.Error{

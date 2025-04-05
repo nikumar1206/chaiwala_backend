@@ -8,6 +8,9 @@ import (
 
 	"ChaiwalaBackend/db"
 	"ChaiwalaBackend/middlewares"
+	"ChaiwalaBackend/routes/comments"
+	"ChaiwalaBackend/routes/favorites"
+	"ChaiwalaBackend/routes/recipes"
 	"ChaiwalaBackend/routes/users"
 
 	_ "net/http/pprof"
@@ -42,6 +45,9 @@ func main() {
 	dbConn := db.New(conn)
 
 	users.BuildRouter(app, dbConn)
+	recipes.BuildRouter(app, dbConn)
+	comments.BuildRouter(app, dbConn)
+	favorites.BuildRouter(app, dbConn)
 
 	app.Get("/", func(c fiber.Ctx) error {
 		return c.SendString("Hello, World 👋!")
