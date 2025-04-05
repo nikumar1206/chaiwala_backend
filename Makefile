@@ -7,7 +7,7 @@ GOGET=$(GOCMD) get
 BINARY_NAME=chaiwala
 BINARY_UNIX=$(BINARY_NAME)_unix
 
-export PORT = 8000
+include .env
 
 ifneq (,$(wildcard ./.env))
     include .env

@@ -1,10 +1,16 @@
 package main
 
 import (
-	"ChaiwalaBackend/db"
-	"ChaiwalaBackend/routes"
 	"context"
+	"fmt"
+	"net/http"
 	"os"
+
+	"ChaiwalaBackend/db"
+	"ChaiwalaBackend/middlewares"
+	"ChaiwalaBackend/routes/users"
+
+	_ "net/http/pprof"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/requestid"
@@ -22,31 +28,28 @@ func newAppConfig() *AppConfig {
 }
 
 func main() {
-
 	ac := newAppConfig()
-
 	app := fiber.New()
+	app.Use(requestid.New())
+	app.Use(middlewares.JWT())
 
-	ctx := context.Background()
-
-	conn, err := pgx.Connect(ctx, "user=nikhil dbname=chaiwala sslmode=verify-full")
+	conn, err := pgx.Connect(context.Background(), "user=nikhil dbname=chaiwala sslmode=verify-full")
 	if err != nil {
 		panic(err)
 	}
-	defer conn.Close(ctx)
+	defer conn.Close(context.Background())
 
 	dbConn := db.New(conn)
 
-	app.Use(requestid.New())
-
-	routes.BuildUsersRouter(app, dbConn)
+	users.BuildRouter(app, dbConn)
 
 	app.Get("/", func(c fiber.Ctx) error {
 		return c.SendString("Hello, World 👋!")
 	})
-
+	go func() {
+		fmt.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 	app.Listen(ac.port, fiber.ListenConfig{
 		DisableStartupMessage: true,
 	})
-
 }

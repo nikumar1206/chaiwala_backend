@@ -3,8 +3,8 @@ CREATE TABLE users (
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    bio TEXT,
-    avatar_url TEXT,
+    bio TEXT NOT NULL,
+    avatar_url TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW ()
 );
 
@@ -12,9 +12,9 @@ CREATE TABLE recipes (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
     title VARCHAR(100) NOT NULL,
-    description TEXT,
+    description TEXT NOT NULL,
     instructions TEXT NOT NULL,
-    image_url TEXT,
+    image_url TEXT NOT NULL,
     prep_time_minutes INTEGER,
     brew_time_minutes INTEGER,
     servings INTEGER,

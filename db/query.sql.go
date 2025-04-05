@@ -141,9 +141,9 @@ RETURNING id, user_id, title, description, instructions, image_url, prep_time_mi
 type CreateRecipeParams struct {
 	UserID          pgtype.Int4
 	Title           string
-	Description     pgtype.Text
+	Description     string
 	Instructions    string
-	ImageUrl        pgtype.Text
+	ImageUrl        string
 	PrepTimeMinutes pgtype.Int4
 	BrewTimeMinutes pgtype.Int4
 	Servings        pgtype.Int4
@@ -193,8 +193,8 @@ type CreateUserParams struct {
 	Username     string
 	Email        string
 	PasswordHash string
-	Bio          pgtype.Text
-	AvatarUrl    pgtype.Text
+	Bio          string
+	AvatarUrl    string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -340,7 +340,7 @@ type ListCommentsRow struct {
 	Comment   string
 	CreatedAt pgtype.Timestamp
 	Username  string
-	AvatarUrl pgtype.Text
+	AvatarUrl string
 }
 
 func (q *Queries) ListComments(ctx context.Context, recipeID pgtype.Int4) ([]ListCommentsRow, error) {
@@ -626,9 +626,9 @@ WHERE id = $1
 type UpdateRecipeParams struct {
 	ID              int32
 	Title           string
-	Description     pgtype.Text
+	Description     string
 	Instructions    string
-	ImageUrl        pgtype.Text
+	ImageUrl        string
 	PrepTimeMinutes pgtype.Int4
 	BrewTimeMinutes pgtype.Int4
 	Servings        pgtype.Int4

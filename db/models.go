@@ -23,9 +23,9 @@ type Recipe struct {
 	ID              int32
 	UserID          pgtype.Int4
 	Title           string
-	Description     pgtype.Text
+	Description     string
 	Instructions    string
-	ImageUrl        pgtype.Text
+	ImageUrl        string
 	PrepTimeMinutes pgtype.Int4
 	BrewTimeMinutes pgtype.Int4
 	Servings        pgtype.Int4
@@ -72,7 +72,7 @@ type User struct {
 	Username     string
 	Email        string
 	PasswordHash string
-	Bio          pgtype.Text
-	AvatarUrl    pgtype.Text
+	Bio          string
+	AvatarUrl    string
 	CreatedAt    pgtype.Timestamp
 }
