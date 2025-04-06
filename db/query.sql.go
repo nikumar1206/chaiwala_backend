@@ -21,9 +21,9 @@ RETURNING id, recipe_id, user_id, comment, created_at
 `
 
 type AddCommentParams struct {
-	RecipeID pgtype.Int4
-	UserID   pgtype.Int4
-	Comment  string
+	RecipeID pgtype.Int4 `json:"recipeId"`
+	UserID   pgtype.Int4 `json:"userId"`
+	Comment  string      `json:"comment"`
 }
 
 func (q *Queries) AddComment(ctx context.Context, arg AddCommentParams) (RecipeComment, error) {
@@ -63,9 +63,9 @@ RETURNING id, recipe_id, ingredient_id, quantity
 `
 
 type AddRecipeIngredientParams struct {
-	RecipeID     pgtype.Int4
-	IngredientID pgtype.Int4
-	Quantity     pgtype.Text
+	RecipeID     pgtype.Int4 `json:"recipeId"`
+	IngredientID pgtype.Int4 `json:"ingredientId"`
+	Quantity     pgtype.Text `json:"quantity"`
 }
 
 func (q *Queries) AddRecipeIngredient(ctx context.Context, arg AddRecipeIngredientParams) (RecipeIngredient, error) {
@@ -90,10 +90,10 @@ RETURNING id, recipe_id, step_number, description, media_url
 `
 
 type AddRecipeStepParams struct {
-	RecipeID    pgtype.Int4
-	StepNumber  int32
-	Description string
-	MediaUrl    pgtype.Text
+	RecipeID    pgtype.Int4 `json:"recipeId"`
+	StepNumber  int32       `json:"stepNumber"`
+	Description string      `json:"description"`
+	MediaUrl    pgtype.Text `json:"mediaUrl"`
 }
 
 func (q *Queries) AddRecipeStep(ctx context.Context, arg AddRecipeStepParams) (RecipeStep, error) {
@@ -139,15 +139,15 @@ RETURNING id, user_id, title, description, instructions, image_url, prep_time_mi
 `
 
 type CreateRecipeParams struct {
-	UserID          pgtype.Int4
-	Title           string
-	Description     string
-	Instructions    string
-	ImageUrl        string
-	PrepTimeMinutes pgtype.Int4
-	BrewTimeMinutes pgtype.Int4
-	Servings        pgtype.Int4
-	IsPublic        pgtype.Bool
+	UserID          pgtype.Int4 `json:"userId"`
+	Title           string      `json:"title"`
+	Description     string      `json:"description"`
+	Instructions    string      `json:"instructions"`
+	ImageUrl        string      `json:"imageUrl"`
+	PrepTimeMinutes pgtype.Int4 `json:"prepTimeMinutes"`
+	BrewTimeMinutes pgtype.Int4 `json:"brewTimeMinutes"`
+	Servings        pgtype.Int4 `json:"servings"`
+	IsPublic        pgtype.Bool `json:"isPublic"`
 }
 
 func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Recipe, error) {
@@ -190,11 +190,11 @@ RETURNING id, username, email, password_hash, bio, avatar_url, created_at
 `
 
 type CreateUserParams struct {
-	Username     string
-	Email        string
-	PasswordHash string
-	Bio          string
-	AvatarUrl    string
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	PasswordHash string `json:"passwordHash"`
+	Bio          string `json:"bio"`
+	AvatarUrl    string `json:"avatarUrl"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -245,8 +245,8 @@ ON CONFLICT DO NOTHING
 `
 
 type FavoriteRecipeParams struct {
-	UserID   int32
-	RecipeID int32
+	UserID   int32 `json:"userId"`
+	RecipeID int32 `json:"recipeId"`
 }
 
 func (q *Queries) FavoriteRecipe(ctx context.Context, arg FavoriteRecipeParams) error {
@@ -327,8 +327,8 @@ SELECT EXISTS (
 `
 
 type IsRecipeFavoritedParams struct {
-	UserID   int32
-	RecipeID int32
+	UserID   int32 `json:"userId"`
+	RecipeID int32 `json:"recipeId"`
 }
 
 func (q *Queries) IsRecipeFavorited(ctx context.Context, arg IsRecipeFavoritedParams) (bool, error) {
@@ -347,10 +347,10 @@ ORDER BY rc.created_at DESC
 `
 
 type ListCommentsRow struct {
-	Comment   string
-	CreatedAt pgtype.Timestamp
-	Username  string
-	AvatarUrl string
+	Comment   string           `json:"comment"`
+	CreatedAt pgtype.Timestamp `json:"createdAt"`
+	Username  string           `json:"username"`
+	AvatarUrl string           `json:"avatarUrl"`
 }
 
 func (q *Queries) ListComments(ctx context.Context, recipeID pgtype.Int4) ([]ListCommentsRow, error) {
@@ -457,8 +457,8 @@ WHERE ri.recipe_id = $1
 `
 
 type ListRecipeIngredientsRow struct {
-	Quantity pgtype.Text
-	Name     string
+	Quantity pgtype.Text `json:"quantity"`
+	Name     string      `json:"name"`
 }
 
 func (q *Queries) ListRecipeIngredients(ctx context.Context, recipeID pgtype.Int4) ([]ListRecipeIngredientsRow, error) {
@@ -627,8 +627,8 @@ ON CONFLICT DO NOTHING
 `
 
 type TagRecipeParams struct {
-	RecipeID int32
-	TagID    int32
+	RecipeID int32 `json:"recipeId"`
+	TagID    int32 `json:"tagId"`
 }
 
 func (q *Queries) TagRecipe(ctx context.Context, arg TagRecipeParams) error {
@@ -642,8 +642,8 @@ WHERE user_id = $1 AND recipe_id = $2
 `
 
 type UnfavoriteRecipeParams struct {
-	UserID   int32
-	RecipeID int32
+	UserID   int32 `json:"userId"`
+	RecipeID int32 `json:"recipeId"`
 }
 
 func (q *Queries) UnfavoriteRecipe(ctx context.Context, arg UnfavoriteRecipeParams) error {
@@ -658,8 +658,8 @@ WHERE id = $1
 `
 
 type UpdateCommentParams struct {
-	ID      int32
-	Comment string
+	ID      int32  `json:"id"`
+	Comment string `json:"comment"`
 }
 
 func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) error {
@@ -682,15 +682,15 @@ WHERE id = $1
 `
 
 type UpdateRecipeParams struct {
-	ID              int32
-	Title           string
-	Description     string
-	Instructions    string
-	ImageUrl        string
-	PrepTimeMinutes pgtype.Int4
-	BrewTimeMinutes pgtype.Int4
-	Servings        pgtype.Int4
-	IsPublic        pgtype.Bool
+	ID              int32       `json:"id"`
+	Title           string      `json:"title"`
+	Description     string      `json:"description"`
+	Instructions    string      `json:"instructions"`
+	ImageUrl        string      `json:"imageUrl"`
+	PrepTimeMinutes pgtype.Int4 `json:"prepTimeMinutes"`
+	BrewTimeMinutes pgtype.Int4 `json:"brewTimeMinutes"`
+	Servings        pgtype.Int4 `json:"servings"`
+	IsPublic        pgtype.Bool `json:"isPublic"`
 }
 
 func (q *Queries) UpdateRecipe(ctx context.Context, arg UpdateRecipeParams) error {

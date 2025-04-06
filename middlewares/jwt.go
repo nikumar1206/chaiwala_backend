@@ -13,7 +13,7 @@ import (
 func JWT() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		path := c.Path()
-		if path == "/users/login" || path == "/users/register" {
+		if path == "/auth/login" || path == "/auth/register" {
 			return c.Next()
 		}
 

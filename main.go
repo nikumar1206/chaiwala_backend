@@ -44,17 +44,24 @@ func main() {
 
 	dbConn := db.New(conn)
 
+	users.BuildAuthRouter(app, dbConn)
 	users.BuildRouter(app, dbConn)
 	recipes.BuildRouter(app, dbConn)
 	comments.BuildRouter(app, dbConn)
 	favorites.BuildRouter(app, dbConn)
 
-	app.Get("/", func(c fiber.Ctx) error {
+	app.Get("", func(c fiber.Ctx) error {
 		return c.SendString("Hello, World 👋!")
 	})
 	go func() {
 		fmt.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
+	routes := app.GetRoutes(true)
+
+	// Print the routes
+	for _, route := range routes {
+		fmt.Printf("%s %s\n", route.Method, route.Path)
+	}
 	app.Listen(ac.port, fiber.ListenConfig{
 		DisableStartupMessage: true,
 	})

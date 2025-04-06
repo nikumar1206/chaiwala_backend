@@ -15,14 +15,13 @@ import (
 func BuildRouter(app *fiber.App, dbConn *db.Queries) *fiber.Router {
 	recipeRouter := app.Group("/recipes")
 
-	recipeRouter.Get("/", listPublicRecipes(dbConn))
-	recipeRouter.Get("/:id", getRecipeByID(dbConn))
-	recipeRouter.Post("/", createRecipe(dbConn))
-	recipeRouter.Put("/:id", updateRecipe(dbConn))
-	recipeRouter.Delete("/:id", deleteRecipe(dbConn))
+	recipeRouter.Get("", listPublicRecipes(dbConn))
+	recipeRouter.Get("/:recipeId", getRecipeByID(dbConn))
+	recipeRouter.Post("", createRecipe(dbConn))
+	recipeRouter.Put("/:recipeId", updateRecipe(dbConn))
+	recipeRouter.Delete("/:recipeId", deleteRecipe(dbConn))
 
-	recipeRouter.Get("/user/:userId", listUserRecipes(dbConn))
-	recipeRouter.Get("/favorites/user/:userId", listUserFavorites(dbConn))
+	recipeRouter.Get("/:recipeId/comments", listRecipeComments(dbConn))
 
 	return &recipeRouter
 }
@@ -43,7 +42,7 @@ func listPublicRecipes(dbConn *db.Queries) fiber.Handler {
 
 func getRecipeByID(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		id, err := strconv.Atoi(c.Params("id"))
+		id, err := strconv.Atoi(c.Params("recipeId"))
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid recipe ID",
@@ -98,7 +97,7 @@ func createRecipe(dbConn *db.Queries) fiber.Handler {
 
 func updateRecipe(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		id, err := strconv.Atoi(c.Params("id"))
+		id, err := strconv.Atoi(c.Params("recipeId"))
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid recipe ID",
@@ -138,7 +137,7 @@ func updateRecipe(dbConn *db.Queries) fiber.Handler {
 
 func deleteRecipe(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		id, err := strconv.Atoi(c.Params("id"))
+		id, err := strconv.Atoi(c.Params("recipeId"))
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid recipe ID",
@@ -158,46 +157,25 @@ func deleteRecipe(dbConn *db.Queries) fiber.Handler {
 	}
 }
 
-func listUserRecipes(dbConn *db.Queries) fiber.Handler {
+func listRecipeComments(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		userID, err := strconv.Atoi(c.Params("userId"))
+		recipeID, err := strconv.Atoi(c.Params("recipeId"))
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
-				Message:   "Invalid user ID",
+				Message:   "Invalid recipe ID",
 				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
-		recipes, err := dbConn.ListUserRecipes(c.Context(), pgtype.Int4{Int32: int32(userID), Valid: true})
-		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(common.Error{
-				Message:   "Failed to fetch user recipes",
-				Context:   err.Error(),
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
-		}
-		return c.JSON(recipes)
-	}
-}
 
-func listUserFavorites(dbConn *db.Queries) fiber.Handler {
-	return func(c fiber.Ctx) error {
-		userID, err := strconv.Atoi(c.Params("userId"))
-		if err != nil {
-			return c.Status(http.StatusBadRequest).JSON(common.Error{
-				Message:   "Invalid user ID",
-				Context:   err.Error(),
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
-		}
-		recipes, err := dbConn.ListUserFavorites(c.Context(), int32(userID))
+		comments, err := dbConn.ListComments(c.Context(), pgtype.Int4{Int32: int32(recipeID), Valid: true})
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(common.Error{
-				Message:   "Failed to fetch user favorites",
+				Message:   "Failed to fetch comments",
 				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
-		return c.JSON(recipes)
+		return c.JSON(comments)
 	}
 }

@@ -15,13 +15,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func BuildRouter(app *fiber.App, dbConn *db.Queries) *fiber.Router {
-	userRouter := app.Group("/users")
+func BuildAuthRouter(app *fiber.App, dbConn *db.Queries) *fiber.Router {
+	userRouter := app.Group("/auth")
 
-	userRouter.Get("", buildGetUser(dbConn))
-	userRouter.Post("/register", buildRegisterUser(dbConn))
-	userRouter.Post("/login", buildLoginUser(dbConn))
-	userRouter.Post("/refresh", buildRefreshRoute(dbConn))
+	userRouter.Get("", getUser(dbConn))
+	userRouter.Post("/register", registerUser(dbConn))
+	userRouter.Post("/login", loginUser(dbConn))
+	userRouter.Post("/refresh", refreshRoute(dbConn))
 
 	return &userRouter
 }
@@ -34,22 +34,7 @@ type Body struct {
 	} `json:"slideshow"`
 }
 
-func buildGetUser(dbConn *db.Queries) fiber.Handler {
-	return func(c fiber.Ctx) error {
-		usr, err := dbConn.GetUser(c.Context(), 1)
-		if err != nil {
-			fmt.Print(err)
-			return c.JSON(common.Error{
-				Message:   "User not found.",
-				Context:   err.Error(),
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
-		}
-		return c.JSON(usr)
-	}
-}
-
-func buildRegisterUser(dbConn *db.Queries) fiber.Handler {
+func registerUser(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		u := new(RegisterUser)
 		if err := c.Bind().JSON(u); err != nil {
@@ -58,7 +43,6 @@ func buildRegisterUser(dbConn *db.Queries) fiber.Handler {
 
 		hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), 0)
 		if err != nil {
-			fmt.Errorf(err.Error())
 			c.Status(500)
 			return c.JSON(common.Error{
 				Message:   "User could not be created",
@@ -109,7 +93,7 @@ func buildRegisterUser(dbConn *db.Queries) fiber.Handler {
 	}
 }
 
-func buildLoginUser(dbConn *db.Queries) fiber.Handler {
+func loginUser(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		u := new(LoginUser)
 		if err := c.Bind().JSON(u); err != nil {
@@ -145,17 +129,22 @@ func buildLoginUser(dbConn *db.Queries) fiber.Handler {
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
-		c.Status(200)
-		return c.JSON(GeneratedJWTResponse{
-			AccessToken:  at,
-			RefreshToken: rt,
-			ExpiresIn:    exp.UnixMilli(),
-			TokenType:    "Bearer",
-		})
+
+		return c.JSON(
+			LoginUserResponse{
+				Token: GeneratedJWTResponse{
+					AccessToken:  at,
+					RefreshToken: rt,
+					ExpiresIn:    exp.UnixMilli(),
+					TokenType:    "Bearer",
+				},
+				User: usr,
+			},
+		)
 	}
 }
 
-func buildRefreshRoute(dbConn *db.Queries) fiber.Handler {
+func refreshRoute(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		req := new(RefreshTokenRequest)
 		if err := c.Bind().JSON(req); err != nil {

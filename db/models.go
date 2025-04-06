@@ -9,70 +9,70 @@ import (
 )
 
 type Favorite struct {
-	UserID    int32
-	RecipeID  int32
-	CreatedAt pgtype.Timestamp
+	UserID    int32            `json:"userId"`
+	RecipeID  int32            `json:"recipeId"`
+	CreatedAt pgtype.Timestamp `json:"createdAt"`
 }
 
 type Ingredient struct {
-	ID   int32
-	Name string
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
 type Recipe struct {
-	ID              int32
-	UserID          pgtype.Int4
-	Title           string
-	Description     string
-	Instructions    string
-	ImageUrl        string
-	PrepTimeMinutes pgtype.Int4
-	BrewTimeMinutes pgtype.Int4
-	Servings        pgtype.Int4
-	IsPublic        pgtype.Bool
-	CreatedAt       pgtype.Timestamp
-	UpdatedAt       pgtype.Timestamp
+	ID              int32            `json:"id"`
+	UserID          pgtype.Int4      `json:"userId"`
+	Title           string           `json:"title"`
+	Description     string           `json:"description"`
+	Instructions    string           `json:"instructions"`
+	ImageUrl        string           `json:"imageUrl"`
+	PrepTimeMinutes pgtype.Int4      `json:"prepTimeMinutes"`
+	BrewTimeMinutes pgtype.Int4      `json:"brewTimeMinutes"`
+	Servings        pgtype.Int4      `json:"servings"`
+	IsPublic        pgtype.Bool      `json:"isPublic"`
+	CreatedAt       pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt       pgtype.Timestamp `json:"updatedAt"`
 }
 
 type RecipeComment struct {
-	ID        int32
-	RecipeID  pgtype.Int4
-	UserID    pgtype.Int4
-	Comment   string
-	CreatedAt pgtype.Timestamp
+	ID        int32            `json:"id"`
+	RecipeID  pgtype.Int4      `json:"recipeId"`
+	UserID    pgtype.Int4      `json:"userId"`
+	Comment   string           `json:"comment"`
+	CreatedAt pgtype.Timestamp `json:"createdAt"`
 }
 
 type RecipeIngredient struct {
-	ID           int32
-	RecipeID     pgtype.Int4
-	IngredientID pgtype.Int4
-	Quantity     pgtype.Text
+	ID           int32       `json:"id"`
+	RecipeID     pgtype.Int4 `json:"recipeId"`
+	IngredientID pgtype.Int4 `json:"ingredientId"`
+	Quantity     pgtype.Text `json:"quantity"`
 }
 
 type RecipeStep struct {
-	ID          int32
-	RecipeID    pgtype.Int4
-	StepNumber  int32
-	Description string
-	MediaUrl    pgtype.Text
+	ID          int32       `json:"id"`
+	RecipeID    pgtype.Int4 `json:"recipeId"`
+	StepNumber  int32       `json:"stepNumber"`
+	Description string      `json:"description"`
+	MediaUrl    pgtype.Text `json:"mediaUrl"`
 }
 
 type RecipeTag struct {
-	RecipeID int32
-	TagID    int32
+	RecipeID int32 `json:"recipeId"`
+	TagID    int32 `json:"tagId"`
 }
 
 type Tag struct {
-	ID   int32
-	Name string
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
 type User struct {
-	ID           int32
-	Username     string
-	Email        string
-	PasswordHash string
-	Bio          string
-	AvatarUrl    string
-	CreatedAt    pgtype.Timestamp
+	ID           int32            `json:"id"`
+	Username     string           `json:"username"`
+	Email        string           `json:"email"`
+	PasswordHash string           `json:"-"`
+	Bio          string           `json:"bio"`
+	AvatarUrl    string           `json:"avatarUrl"`
+	CreatedAt    pgtype.Timestamp `json:"createdAt"`
 }

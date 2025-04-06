@@ -1,6 +1,9 @@
 package favorites
 
 import (
+	"net/http"
+	"strconv"
+
 	"ChaiwalaBackend/db"
 	"ChaiwalaBackend/routes"
 
@@ -10,14 +13,13 @@ import (
 func BuildRouter(app *fiber.App, dbConn *db.Queries) *fiber.Router {
 	favoriteRouter := app.Group("/favorites")
 
-	favoriteRouter.Post("/", buildFavoriteRecipe(dbConn))
-	favoriteRouter.Delete("/", buildUnfavoriteRecipe(dbConn))
-	favoriteRouter.Get("/", buildListUserFavorites(dbConn))
+	favoriteRouter.Post("", favoriteRecipe(dbConn))
+	favoriteRouter.Delete("/:favoriteId", unfavoriteRecipe(dbConn))
 
 	return &favoriteRouter
 }
 
-func buildFavoriteRecipe(dbConn *db.Queries) fiber.Handler {
+func favoriteRecipe(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		favBody := new(Favorite)
 		if err := c.Bind().JSON(favBody); err != nil {
@@ -41,12 +43,12 @@ func buildFavoriteRecipe(dbConn *db.Queries) fiber.Handler {
 	}
 }
 
-// buildUnfavoriteRecipe handles the logic for unfavoriting a recipe.
-func buildUnfavoriteRecipe(dbConn *db.Queries) fiber.Handler {
+// UnfavoriteRecipe handles the logic for unfavoriting a recipe.
+func unfavoriteRecipe(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		unfavBody := new(Favorite)
-		if err := c.Bind().JSON(unfavBody); err != nil {
-			return err
+		favoriteID, err := strconv.Atoi(c.Params("favoriteId"))
+		if err != nil {
+			return common.SendErrorResponse(c, http.StatusBadRequest, "Invalid Favorite ID.")
 		}
 
 		// Unfavorite the recipe
@@ -63,23 +65,5 @@ func buildUnfavoriteRecipe(dbConn *db.Queries) fiber.Handler {
 		return c.Status(200).JSON(fiber.Map{
 			"Message": "Recipe unfavorited successfully",
 		})
-	}
-}
-
-// buildListUserFavorites retrieves a list of all recipes favorited by the user.
-func buildListUserFavorites(dbConn *db.Queries) fiber.Handler {
-	return func(c fiber.Ctx) error {
-		userID := c.Locals("userId").(int32) // Assuming user ID is available in Locals
-		favorites, err := dbConn.ListUserFavorites(c.Context(), userID)
-		if err != nil {
-			c.Status(500)
-			return c.JSON(routes.Error{
-				Message:   "Could not retrieve favorites",
-				Context:   err.Error(),
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
-		}
-
-		return c.Status(200).JSON(favorites)
 	}
 }
