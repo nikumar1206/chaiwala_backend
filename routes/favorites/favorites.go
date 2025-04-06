@@ -6,6 +6,7 @@ import (
 
 	"ChaiwalaBackend/db"
 	"ChaiwalaBackend/routes"
+	common "ChaiwalaBackend/routes"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -52,7 +53,7 @@ func unfavoriteRecipe(dbConn *db.Queries) fiber.Handler {
 		}
 
 		// Unfavorite the recipe
-		err := dbConn.UnfavoriteRecipe(c.Context(), db.UnfavoriteRecipeParams{UserID: unfavBody.RecipeID})
+		err = dbConn.UnfavoriteRecipe(c.Context(), db.UnfavoriteRecipeParams{UserID: int32(favoriteID)})
 		if err != nil {
 			c.Status(500)
 			return c.JSON(routes.Error{
