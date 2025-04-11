@@ -30,11 +30,7 @@ func listPublicRecipes(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		recipes, err := dbConn.ListPublicRecipes(c.Context())
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(common.Error{
-				Message:   "Failed to fetch recipes",
-				Context:   err.Error(),
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to fetch recipes")
 		}
 		return c.JSON(recipes)
 	}
@@ -44,19 +40,12 @@ func getRecipeByID(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("recipeId"))
 		if err != nil {
-			return c.Status(http.StatusBadRequest).JSON(common.Error{
-				Message:   "Invalid recipe ID",
-				Context:   err.Error(),
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusUnprocessableEntity, "Invalid Request ID")
 		}
+
 		recipe, err := dbConn.GetRecipe(c.Context(), int32(id))
 		if err != nil {
-			return c.Status(http.StatusNotFound).JSON(common.Error{
-				Message:   "Recipe not found",
-				Context:   err.Error(),
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusNotFound, "Recipe not found")
 		}
 		return c.JSON(recipe)
 	}

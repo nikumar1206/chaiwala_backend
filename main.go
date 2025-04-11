@@ -58,7 +58,6 @@ func main() {
 	}()
 	routes := app.GetRoutes(true)
 
-	// Print the routes
 	for _, route := range routes {
 		fmt.Printf("%s %s\n", route.Method, route.Path)
 	}

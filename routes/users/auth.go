@@ -26,14 +26,6 @@ func BuildAuthRouter(app *fiber.App, dbConn *db.Queries) *fiber.Router {
 	return &userRouter
 }
 
-type Body struct {
-	Slideshow struct {
-		Author string `json:"author"`
-		Date   string `json:"date"`
-		Title  string `json:"title"`
-	} `json:"slideshow"`
-}
-
 func registerUser(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		u := new(RegisterUser)

@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"ChaiwalaBackend/db"
-	"ChaiwalaBackend/routes"
 	common "ChaiwalaBackend/routes"
 
 	"github.com/gofiber/fiber/v3"
@@ -27,15 +26,9 @@ func favoriteRecipe(dbConn *db.Queries) fiber.Handler {
 			return err
 		}
 
-		// Favorite the recipe
 		err := dbConn.FavoriteRecipe(c.Context(), db.FavoriteRecipeParams{UserID: favBody.UserID, RecipeID: favBody.RecipeID})
 		if err != nil {
-			c.Status(500)
-			return c.JSON(routes.Error{
-				Message:   "Could not favorite the recipe",
-				Context:   err.Error(),
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Could not favorite the recipe")
 		}
 
 		return c.Status(200).JSON(fiber.Map{
@@ -44,7 +37,6 @@ func favoriteRecipe(dbConn *db.Queries) fiber.Handler {
 	}
 }
 
-// UnfavoriteRecipe handles the logic for unfavoriting a recipe.
 func unfavoriteRecipe(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		favoriteID, err := strconv.Atoi(c.Params("favoriteId"))
@@ -52,15 +44,9 @@ func unfavoriteRecipe(dbConn *db.Queries) fiber.Handler {
 			return common.SendErrorResponse(c, http.StatusBadRequest, "Invalid Favorite ID.")
 		}
 
-		// Unfavorite the recipe
 		err = dbConn.UnfavoriteRecipe(c.Context(), db.UnfavoriteRecipeParams{UserID: int32(favoriteID)})
 		if err != nil {
-			c.Status(500)
-			return c.JSON(routes.Error{
-				Message:   "Could not unfavorite the recipe",
-				Context:   err.Error(),
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Could not unfavorite the recipe")
 		}
 
 		return c.Status(200).JSON(fiber.Map{
