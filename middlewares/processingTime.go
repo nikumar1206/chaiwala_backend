@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -13,8 +13,11 @@ func Timing() fiber.Handler {
 
 		err := c.Next()
 
-		duration := time.Since(start).Microseconds()
-		log.Printf("[%s] %s took %d µs", c.Method(), c.Path(), duration)
+		slog.InfoContext(
+			c.Context(),
+			"handled request",
+			slog.String("duration", time.Since(start).String()),
+		)
 
 		return err
 	}

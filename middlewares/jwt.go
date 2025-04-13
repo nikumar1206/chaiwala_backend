@@ -1,4 +1,3 @@
-// Middleware that validates JWT, skipping /login and /register
 package middlewares
 
 import (

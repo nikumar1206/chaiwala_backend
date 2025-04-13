@@ -3,6 +3,7 @@ package s3
 import (
 	"bytes"
 	"context"
+	"io"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -32,12 +33,12 @@ func New(ctx context.Context, awsRegion, s3BucketName string) S3Client {
 }
 
 // Upload uploads an image to the bucket
-func (s *S3Client) Upload(ctx context.Context, key string, content []byte, contentType string) error {
+func (s *S3Client) Upload(ctx context.Context, key string, fileReader io.Reader, contentType string) error {
 	uploader := manager.NewUploader(s.client)
 	_, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(s.BucketName),
 		Key:         aws.String(key),
-		Body:        bytes.NewReader(content),
+		Body:        fileReader,
 		ContentType: aws.String(contentType),
 	})
 
@@ -74,8 +75,8 @@ func (s *S3Client) Download(ctx context.Context, key string) ([]byte, error) {
 }
 
 // Update is just a re-upload
-func (s *S3Client) Update(ctx context.Context, key string, content []byte, contentType string) error {
-	return s.Upload(ctx, key, content, contentType)
+func (s *S3Client) Update(ctx context.Context, key string, fileReader io.Reader, contentType string) error {
+	return s.Upload(ctx, key, fileReader, contentType)
 }
 
 // Delete removes the object from the bucket

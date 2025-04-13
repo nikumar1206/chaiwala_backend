@@ -3,6 +3,7 @@ package users
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"ChaiwalaBackend/db"
@@ -87,6 +88,7 @@ func registerUser(dbConn *db.Queries) fiber.Handler {
 
 func loginUser(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
+		slog.InfoContext(c.Context(), "Received a request to loginUser")
 		u := new(LoginUser)
 		if err := c.Bind().JSON(u); err != nil {
 			return err
