@@ -32,6 +32,9 @@ func listPublicRecipes(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to fetch recipes")
 		}
+		if recipes == nil {
+			return c.JSON([]db.Recipe{})
+		}
 		return c.JSON(recipes)
 	}
 }
@@ -61,12 +64,13 @@ func createRecipe(dbConn *db.Queries) fiber.Handler {
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
+
 		recipe, err := dbConn.CreateRecipe(c.Context(), db.CreateRecipeParams{
 			UserID:          pgtype.Int4{Int32: r.UserID, Valid: true},
 			Title:           r.Title,
 			Description:     r.Description,
 			Instructions:    r.Instructions,
-			ImageUrl:        r.ImageURL,
+			ImageUrl:        r.ImageData,
 			PrepTimeMinutes: pgtype.Int4{Int32: r.PrepTimeMinutes, Valid: true},
 			BrewTimeMinutes: pgtype.Int4{Int32: r.BrewTimeMinutes, Valid: true},
 			Servings:        pgtype.Int4{Int32: r.Servings, Valid: true},

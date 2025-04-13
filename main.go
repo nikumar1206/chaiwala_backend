@@ -15,25 +15,48 @@ import (
 
 	_ "net/http/pprof"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/requestid"
 	"github.com/jackc/pgx/v5"
 )
 
 type AppConfig struct {
-	port string
+	PORT                  string
+	AWS_REGION            string
+	AWS_ACCESS_KEY_ID     string
+	AWS_SECRET_ACCESS_KEY string
+	S3_BUCKET_NAME        string
 }
 
 func newAppConfig() *AppConfig {
 	return &AppConfig{
-		port: ":" + os.Getenv("PORT"),
+		PORT:                  ":" + os.Getenv("PORT"),
+		AWS_REGION:            os.Getenv("AWS_REGION"),
+		AWS_ACCESS_KEY_ID:     os.Getenv("AWS_ACCESS_KEY_ID"),
+		AWS_SECRET_ACCESS_KEY: os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		S3_BUCKET_NAME:        os.Getenv("S3_BUCKET_NAME"),
 	}
 }
 
 func main() {
 	ac := newAppConfig()
+
+	// s3Client := s3Helper.New(context.Background(), ac.AWS_REGION, ac.S3_BUCKET_NAME)
+	// err := s3Client.Upload(
+	// 	context.Background(),
+	// 	"test/test.jpeg",
+	// 	readFile("test.jpeg"),
+	// 	"image/jpeg",
+	// )
+	// if err != nil {
+	// 	panic(err)
+	// }
+
 	app := fiber.New()
 	app.Use(requestid.New())
+	app.Use(middlewares.Timing())
 	app.Use(middlewares.JWT())
 
 	conn, err := pgx.Connect(context.Background(), "user=nikhil dbname=chaiwala sslmode=verify-full")
@@ -61,7 +84,24 @@ func main() {
 	for _, route := range routes {
 		fmt.Printf("%s %s\n", route.Method, route.Path)
 	}
-	app.Listen(ac.port, fiber.ListenConfig{
+	app.Listen(ac.PORT, fiber.ListenConfig{
 		DisableStartupMessage: true,
 	})
+}
+
+func getS3Client() *s3.Client {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		panic(err)
+	}
+	return s3.NewFromConfig(cfg)
+}
+
+func readFile(filePath string) []byte {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	return content
 }

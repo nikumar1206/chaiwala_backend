@@ -12,3 +12,4 @@
 - make all list endpoints paginated
   - add offset and page_size to query params
 - find way to remove passwordDigestoffset
+- remove brew time as a database thingy

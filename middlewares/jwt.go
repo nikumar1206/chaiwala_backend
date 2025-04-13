@@ -18,7 +18,6 @@ func JWT() fiber.Handler {
 		}
 
 		tokenStr := strings.TrimPrefix(c.Get("Authorization"), "Bearer ")
-
 		claims, err := jwtD.ValidateToken(tokenStr)
 		if err != nil {
 			return fiber.NewError(http.StatusUnauthorized, err.Error())
