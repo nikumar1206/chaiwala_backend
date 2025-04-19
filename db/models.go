@@ -27,7 +27,6 @@ type Recipe struct {
 	Instructions    string           `json:"instructions"`
 	ImageUrl        string           `json:"imageUrl"`
 	PrepTimeMinutes pgtype.Int4      `json:"prepTimeMinutes"`
-	BrewTimeMinutes pgtype.Int4      `json:"brewTimeMinutes"`
 	Servings        pgtype.Int4      `json:"servings"`
 	IsPublic        pgtype.Bool      `json:"isPublic"`
 	CreatedAt       pgtype.Timestamp `json:"createdAt"`

@@ -16,7 +16,6 @@ CREATE TABLE recipes (
     instructions TEXT NOT NULL,
     image_url TEXT NOT NULL,
     prep_time_minutes INTEGER,
-    brew_time_minutes INTEGER,
     servings INTEGER,
     is_public BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW (),

@@ -31,9 +31,9 @@ ORDER BY created_at DESC;
 -- name: CreateRecipe :one
 INSERT INTO recipes (
   user_id, title, description, instructions, image_url,
-  prep_time_minutes, brew_time_minutes, servings, is_public
+  prep_time_minutes, servings, is_public
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9
+  $1, $2, $3, $4, $5, $6, $7, $8
 )
 RETURNING *;
 
@@ -44,9 +44,8 @@ UPDATE recipes SET
   instructions = $4,
   image_url = $5,
   prep_time_minutes = $6,
-  brew_time_minutes = $7,
-  servings = $8,
-  is_public = $9,
+  servings = $7,
+  is_public = $8,
   updated_at = NOW()
 WHERE id = $1;
 

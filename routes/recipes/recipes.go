@@ -72,7 +72,6 @@ func createRecipe(dbConn *db.Queries) fiber.Handler {
 			Instructions:    r.Instructions,
 			ImageUrl:        r.ImageData,
 			PrepTimeMinutes: pgtype.Int4{Int32: r.PrepTimeMinutes, Valid: true},
-			BrewTimeMinutes: pgtype.Int4{Int32: r.BrewTimeMinutes, Valid: true},
 			Servings:        pgtype.Int4{Int32: r.Servings, Valid: true},
 			IsPublic:        pgtype.Bool{Bool: r.IsPublic, Valid: true},
 		})

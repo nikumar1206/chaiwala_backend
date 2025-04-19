@@ -131,11 +131,11 @@ func (q *Queries) AddTag(ctx context.Context, name string) (Tag, error) {
 const createRecipe = `-- name: CreateRecipe :one
 INSERT INTO recipes (
   user_id, title, description, instructions, image_url,
-  prep_time_minutes, brew_time_minutes, servings, is_public
+  prep_time_minutes, servings, is_public
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7, $8, $9
+  $1, $2, $3, $4, $5, $6, $7, $8
 )
-RETURNING id, user_id, title, description, instructions, image_url, prep_time_minutes, brew_time_minutes, servings, is_public, created_at, updated_at
+RETURNING id, user_id, title, description, instructions, image_url, prep_time_minutes, servings, is_public, created_at, updated_at
 `
 
 type CreateRecipeParams struct {
@@ -145,7 +145,6 @@ type CreateRecipeParams struct {
 	Instructions    string      `json:"instructions"`
 	ImageUrl        string      `json:"imageUrl"`
 	PrepTimeMinutes pgtype.Int4 `json:"prepTimeMinutes"`
-	BrewTimeMinutes pgtype.Int4 `json:"brewTimeMinutes"`
 	Servings        pgtype.Int4 `json:"servings"`
 	IsPublic        pgtype.Bool `json:"isPublic"`
 }
@@ -158,7 +157,6 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 		arg.Instructions,
 		arg.ImageUrl,
 		arg.PrepTimeMinutes,
-		arg.BrewTimeMinutes,
 		arg.Servings,
 		arg.IsPublic,
 	)
@@ -171,7 +169,6 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 		&i.Instructions,
 		&i.ImageUrl,
 		&i.PrepTimeMinutes,
-		&i.BrewTimeMinutes,
 		&i.Servings,
 		&i.IsPublic,
 		&i.CreatedAt,
@@ -255,7 +252,7 @@ func (q *Queries) FavoriteRecipe(ctx context.Context, arg FavoriteRecipeParams) 
 }
 
 const getRecipe = `-- name: GetRecipe :one
-SELECT id, user_id, title, description, instructions, image_url, prep_time_minutes, brew_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+SELECT id, user_id, title, description, instructions, image_url, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
 WHERE id = $1 AND is_public = true
 `
 
@@ -270,7 +267,6 @@ func (q *Queries) GetRecipe(ctx context.Context, id int32) (Recipe, error) {
 		&i.Instructions,
 		&i.ImageUrl,
 		&i.PrepTimeMinutes,
-		&i.BrewTimeMinutes,
 		&i.Servings,
 		&i.IsPublic,
 		&i.CreatedAt,
@@ -411,7 +407,7 @@ func (q *Queries) ListCommentsByUser(ctx context.Context, userID pgtype.Int4) ([
 }
 
 const listPublicRecipes = `-- name: ListPublicRecipes :many
-SELECT id, user_id, title, description, instructions, image_url, prep_time_minutes, brew_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+SELECT id, user_id, title, description, instructions, image_url, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
 WHERE is_public = true
 ORDER BY created_at DESC
 `
@@ -433,7 +429,6 @@ func (q *Queries) ListPublicRecipes(ctx context.Context) ([]Recipe, error) {
 			&i.Instructions,
 			&i.ImageUrl,
 			&i.PrepTimeMinutes,
-			&i.BrewTimeMinutes,
 			&i.Servings,
 			&i.IsPublic,
 			&i.CreatedAt,
@@ -541,7 +536,7 @@ func (q *Queries) ListRecipeTags(ctx context.Context, recipeID int32) ([]string,
 }
 
 const listUserFavorites = `-- name: ListUserFavorites :many
-SELECT r.id, r.user_id, r.title, r.description, r.instructions, r.image_url, r.prep_time_minutes, r.brew_time_minutes, r.servings, r.is_public, r.created_at, r.updated_at
+SELECT r.id, r.user_id, r.title, r.description, r.instructions, r.image_url, r.prep_time_minutes, r.servings, r.is_public, r.created_at, r.updated_at
 FROM favorites f
 JOIN recipes r ON f.recipe_id = r.id
 WHERE f.user_id = $1
@@ -565,7 +560,6 @@ func (q *Queries) ListUserFavorites(ctx context.Context, userID int32) ([]Recipe
 			&i.Instructions,
 			&i.ImageUrl,
 			&i.PrepTimeMinutes,
-			&i.BrewTimeMinutes,
 			&i.Servings,
 			&i.IsPublic,
 			&i.CreatedAt,
@@ -582,7 +576,7 @@ func (q *Queries) ListUserFavorites(ctx context.Context, userID int32) ([]Recipe
 }
 
 const listUserRecipes = `-- name: ListUserRecipes :many
-SELECT id, user_id, title, description, instructions, image_url, prep_time_minutes, brew_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+SELECT id, user_id, title, description, instructions, image_url, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -604,7 +598,6 @@ func (q *Queries) ListUserRecipes(ctx context.Context, userID pgtype.Int4) ([]Re
 			&i.Instructions,
 			&i.ImageUrl,
 			&i.PrepTimeMinutes,
-			&i.BrewTimeMinutes,
 			&i.Servings,
 			&i.IsPublic,
 			&i.CreatedAt,
@@ -674,9 +667,8 @@ UPDATE recipes SET
   instructions = $4,
   image_url = $5,
   prep_time_minutes = $6,
-  brew_time_minutes = $7,
-  servings = $8,
-  is_public = $9,
+  servings = $7,
+  is_public = $8,
   updated_at = NOW()
 WHERE id = $1
 `
@@ -688,7 +680,6 @@ type UpdateRecipeParams struct {
 	Instructions    string      `json:"instructions"`
 	ImageUrl        string      `json:"imageUrl"`
 	PrepTimeMinutes pgtype.Int4 `json:"prepTimeMinutes"`
-	BrewTimeMinutes pgtype.Int4 `json:"brewTimeMinutes"`
 	Servings        pgtype.Int4 `json:"servings"`
 	IsPublic        pgtype.Bool `json:"isPublic"`
 }
@@ -701,7 +692,6 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg UpdateRecipeParams) erro
 		arg.Instructions,
 		arg.ImageUrl,
 		arg.PrepTimeMinutes,
-		arg.BrewTimeMinutes,
 		arg.Servings,
 		arg.IsPublic,
 	)
