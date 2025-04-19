@@ -66,7 +66,7 @@ func getItem(s3Client s3.S3Client) fiber.Handler {
 			return routes.SendErrorResponse(c, 422, "No fileId provided")
 		}
 		fmt.Println("what was fileid", fileId)
-		key := fmt.Sprintf("test/%s", fileId)
+		key := fmt.Sprintf("images/%s", fileId)
 		startTime := time.Now()
 		resp, err := s3Client.Download(c.Context(), key)
 		if err != nil {
