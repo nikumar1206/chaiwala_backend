@@ -60,18 +60,15 @@ func (s *S3Client) UploadV2(ctx context.Context, key string, content []byte, con
 }
 
 // Download fetches an object and returns its bytes
-func (s *S3Client) Download(ctx context.Context, key string) ([]byte, error) {
-	downloader := manager.NewDownloader(s.client)
-
-	buf := manager.NewWriteAtBuffer([]byte{})
-	_, err := downloader.Download(ctx, buf, &s3.GetObjectInput{
+func (s *S3Client) Download(ctx context.Context, key string) (s3.GetObjectOutput, error) {
+	resp, err := s.client.GetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: aws.String(s.BucketName),
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return nil, err
+		return s3.GetObjectOutput{}, err
 	}
-	return buf.Bytes(), nil
+	return *resp, nil
 }
 
 // Update is just a re-upload
