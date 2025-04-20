@@ -20,8 +20,8 @@ type GeneratedJWTResponse struct {
 }
 
 type LoginUserResponse struct {
-	Token GeneratedJWTResponse `json:"token,omitempty"`
-	User  db.User              `json:"user,omitempty"`
+	Token GeneratedJWTResponse `json:"token"`
+	User  db.User              `json:"user"`
 }
 
 type RefreshTokenRequest struct {

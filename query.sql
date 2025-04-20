@@ -30,7 +30,7 @@ ORDER BY created_at DESC;
 
 -- name: CreateRecipe :one
 INSERT INTO recipes (
-  user_id, title, description, instructions, image_url,
+  user_id, title, description, instructions, asset_id,
   prep_time_minutes, servings, is_public
 ) VALUES (
   $1, $2, $3, $4, $5, $6, $7, $8
@@ -42,7 +42,7 @@ UPDATE recipes SET
   title = $2,
   description = $3,
   instructions = $4,
-  image_url = $5,
+  asset_id = $5,
   prep_time_minutes = $6,
   servings = $7,
   is_public = $8,
@@ -55,7 +55,7 @@ WHERE id = $1;
 
 -- name: AddRecipeStep :one
 INSERT INTO recipe_steps (
-  recipe_id, step_number, description, media_url
+  recipe_id, step_number, description, asset_id
 ) VALUES (
   $1, $2, $3, $4
 )

@@ -25,7 +25,7 @@ type Recipe struct {
 	Title           string           `json:"title"`
 	Description     string           `json:"description"`
 	Instructions    string           `json:"instructions"`
-	ImageUrl        string           `json:"imageUrl"`
+	AssetID         string           `json:"assetId"`
 	PrepTimeMinutes pgtype.Int4      `json:"prepTimeMinutes"`
 	Servings        pgtype.Int4      `json:"servings"`
 	IsPublic        pgtype.Bool      `json:"isPublic"`
@@ -53,7 +53,7 @@ type RecipeStep struct {
 	RecipeID    pgtype.Int4 `json:"recipeId"`
 	StepNumber  int32       `json:"stepNumber"`
 	Description string      `json:"description"`
-	MediaUrl    pgtype.Text `json:"mediaUrl"`
+	AssetID     pgtype.Text `json:"assetId"`
 }
 
 type RecipeTag struct {

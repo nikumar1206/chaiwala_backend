@@ -14,7 +14,7 @@ CREATE TABLE recipes (
     title VARCHAR(100) NOT NULL,
     description TEXT NOT NULL,
     instructions TEXT NOT NULL,
-    image_url TEXT NOT NULL,
+    asset_id TEXT NOT NULL,
     prep_time_minutes INTEGER,
     servings INTEGER,
     is_public BOOLEAN DEFAULT TRUE,
@@ -27,7 +27,7 @@ CREATE TABLE recipe_steps (
     recipe_id INTEGER REFERENCES recipes (id) ON DELETE CASCADE,
     step_number INTEGER NOT NULL,
     description TEXT NOT NULL,
-    media_url TEXT
+    asset_id TEXT
 );
 
 CREATE TABLE ingredients (

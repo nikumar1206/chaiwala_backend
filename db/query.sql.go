@@ -82,18 +82,18 @@ func (q *Queries) AddRecipeIngredient(ctx context.Context, arg AddRecipeIngredie
 
 const addRecipeStep = `-- name: AddRecipeStep :one
 INSERT INTO recipe_steps (
-  recipe_id, step_number, description, media_url
+  recipe_id, step_number, description, asset_id
 ) VALUES (
   $1, $2, $3, $4
 )
-RETURNING id, recipe_id, step_number, description, media_url
+RETURNING id, recipe_id, step_number, description, asset_id
 `
 
 type AddRecipeStepParams struct {
 	RecipeID    pgtype.Int4 `json:"recipeId"`
 	StepNumber  int32       `json:"stepNumber"`
 	Description string      `json:"description"`
-	MediaUrl    pgtype.Text `json:"mediaUrl"`
+	AssetID     pgtype.Text `json:"assetId"`
 }
 
 func (q *Queries) AddRecipeStep(ctx context.Context, arg AddRecipeStepParams) (RecipeStep, error) {
@@ -101,7 +101,7 @@ func (q *Queries) AddRecipeStep(ctx context.Context, arg AddRecipeStepParams) (R
 		arg.RecipeID,
 		arg.StepNumber,
 		arg.Description,
-		arg.MediaUrl,
+		arg.AssetID,
 	)
 	var i RecipeStep
 	err := row.Scan(
@@ -109,7 +109,7 @@ func (q *Queries) AddRecipeStep(ctx context.Context, arg AddRecipeStepParams) (R
 		&i.RecipeID,
 		&i.StepNumber,
 		&i.Description,
-		&i.MediaUrl,
+		&i.AssetID,
 	)
 	return i, err
 }
@@ -130,12 +130,12 @@ func (q *Queries) AddTag(ctx context.Context, name string) (Tag, error) {
 
 const createRecipe = `-- name: CreateRecipe :one
 INSERT INTO recipes (
-  user_id, title, description, instructions, image_url,
+  user_id, title, description, instructions, asset_id,
   prep_time_minutes, servings, is_public
 ) VALUES (
   $1, $2, $3, $4, $5, $6, $7, $8
 )
-RETURNING id, user_id, title, description, instructions, image_url, prep_time_minutes, servings, is_public, created_at, updated_at
+RETURNING id, user_id, title, description, instructions, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at
 `
 
 type CreateRecipeParams struct {
@@ -143,7 +143,7 @@ type CreateRecipeParams struct {
 	Title           string      `json:"title"`
 	Description     string      `json:"description"`
 	Instructions    string      `json:"instructions"`
-	ImageUrl        string      `json:"imageUrl"`
+	AssetID         string      `json:"assetId"`
 	PrepTimeMinutes pgtype.Int4 `json:"prepTimeMinutes"`
 	Servings        pgtype.Int4 `json:"servings"`
 	IsPublic        pgtype.Bool `json:"isPublic"`
@@ -155,7 +155,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 		arg.Title,
 		arg.Description,
 		arg.Instructions,
-		arg.ImageUrl,
+		arg.AssetID,
 		arg.PrepTimeMinutes,
 		arg.Servings,
 		arg.IsPublic,
@@ -167,7 +167,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 		&i.Title,
 		&i.Description,
 		&i.Instructions,
-		&i.ImageUrl,
+		&i.AssetID,
 		&i.PrepTimeMinutes,
 		&i.Servings,
 		&i.IsPublic,
@@ -252,7 +252,7 @@ func (q *Queries) FavoriteRecipe(ctx context.Context, arg FavoriteRecipeParams) 
 }
 
 const getRecipe = `-- name: GetRecipe :one
-SELECT id, user_id, title, description, instructions, image_url, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+SELECT id, user_id, title, description, instructions, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
 WHERE id = $1 AND is_public = true
 `
 
@@ -265,7 +265,7 @@ func (q *Queries) GetRecipe(ctx context.Context, id int32) (Recipe, error) {
 		&i.Title,
 		&i.Description,
 		&i.Instructions,
-		&i.ImageUrl,
+		&i.AssetID,
 		&i.PrepTimeMinutes,
 		&i.Servings,
 		&i.IsPublic,
@@ -407,7 +407,7 @@ func (q *Queries) ListCommentsByUser(ctx context.Context, userID pgtype.Int4) ([
 }
 
 const listPublicRecipes = `-- name: ListPublicRecipes :many
-SELECT id, user_id, title, description, instructions, image_url, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+SELECT id, user_id, title, description, instructions, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
 WHERE is_public = true
 ORDER BY created_at DESC
 `
@@ -427,7 +427,7 @@ func (q *Queries) ListPublicRecipes(ctx context.Context) ([]Recipe, error) {
 			&i.Title,
 			&i.Description,
 			&i.Instructions,
-			&i.ImageUrl,
+			&i.AssetID,
 			&i.PrepTimeMinutes,
 			&i.Servings,
 			&i.IsPublic,
@@ -477,7 +477,7 @@ func (q *Queries) ListRecipeIngredients(ctx context.Context, recipeID pgtype.Int
 }
 
 const listRecipeSteps = `-- name: ListRecipeSteps :many
-SELECT id, recipe_id, step_number, description, media_url FROM recipe_steps
+SELECT id, recipe_id, step_number, description, asset_id FROM recipe_steps
 WHERE recipe_id = $1
 ORDER BY step_number
 `
@@ -496,7 +496,7 @@ func (q *Queries) ListRecipeSteps(ctx context.Context, recipeID pgtype.Int4) ([]
 			&i.RecipeID,
 			&i.StepNumber,
 			&i.Description,
-			&i.MediaUrl,
+			&i.AssetID,
 		); err != nil {
 			return nil, err
 		}
@@ -536,7 +536,7 @@ func (q *Queries) ListRecipeTags(ctx context.Context, recipeID int32) ([]string,
 }
 
 const listUserFavorites = `-- name: ListUserFavorites :many
-SELECT r.id, r.user_id, r.title, r.description, r.instructions, r.image_url, r.prep_time_minutes, r.servings, r.is_public, r.created_at, r.updated_at
+SELECT r.id, r.user_id, r.title, r.description, r.instructions, r.asset_id, r.prep_time_minutes, r.servings, r.is_public, r.created_at, r.updated_at
 FROM favorites f
 JOIN recipes r ON f.recipe_id = r.id
 WHERE f.user_id = $1
@@ -558,7 +558,7 @@ func (q *Queries) ListUserFavorites(ctx context.Context, userID int32) ([]Recipe
 			&i.Title,
 			&i.Description,
 			&i.Instructions,
-			&i.ImageUrl,
+			&i.AssetID,
 			&i.PrepTimeMinutes,
 			&i.Servings,
 			&i.IsPublic,
@@ -576,7 +576,7 @@ func (q *Queries) ListUserFavorites(ctx context.Context, userID int32) ([]Recipe
 }
 
 const listUserRecipes = `-- name: ListUserRecipes :many
-SELECT id, user_id, title, description, instructions, image_url, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+SELECT id, user_id, title, description, instructions, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -596,7 +596,7 @@ func (q *Queries) ListUserRecipes(ctx context.Context, userID pgtype.Int4) ([]Re
 			&i.Title,
 			&i.Description,
 			&i.Instructions,
-			&i.ImageUrl,
+			&i.AssetID,
 			&i.PrepTimeMinutes,
 			&i.Servings,
 			&i.IsPublic,
@@ -665,7 +665,7 @@ UPDATE recipes SET
   title = $2,
   description = $3,
   instructions = $4,
-  image_url = $5,
+  asset_id = $5,
   prep_time_minutes = $6,
   servings = $7,
   is_public = $8,
@@ -678,7 +678,7 @@ type UpdateRecipeParams struct {
 	Title           string      `json:"title"`
 	Description     string      `json:"description"`
 	Instructions    string      `json:"instructions"`
-	ImageUrl        string      `json:"imageUrl"`
+	AssetID         string      `json:"assetId"`
 	PrepTimeMinutes pgtype.Int4 `json:"prepTimeMinutes"`
 	Servings        pgtype.Int4 `json:"servings"`
 	IsPublic        pgtype.Bool `json:"isPublic"`
@@ -690,7 +690,7 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg UpdateRecipeParams) erro
 		arg.Title,
 		arg.Description,
 		arg.Instructions,
-		arg.ImageUrl,
+		arg.AssetID,
 		arg.PrepTimeMinutes,
 		arg.Servings,
 		arg.IsPublic,

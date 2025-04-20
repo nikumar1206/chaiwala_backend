@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"context"
+	"fmt"
 
 	logger "ChaiwalaBackend/logging"
 
@@ -11,6 +12,7 @@ import (
 
 func SetContext() fiber.Handler {
 	return func(c fiber.Ctx) error {
+		fmt.Println("called set context")
 		requestId := uuid.NewString()
 		ctx := c.Context()
 
@@ -18,7 +20,7 @@ func SetContext() fiber.Handler {
 		ctx = context.WithValue(ctx, logger.Method, c.Method())
 		ctx = context.WithValue(ctx, logger.Path, c.Path())
 		ctx = context.WithValue(ctx, logger.SourceIP, c.IP())
-
+		// set user related context settings in jwt middleware
 		c.SetContext(ctx)
 		return c.Next()
 	}

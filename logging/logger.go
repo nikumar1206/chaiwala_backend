@@ -18,6 +18,8 @@ func (l FiberHandler) Handle(ctx context.Context, r slog.Record) error {
 	sourceIp := ctx.Value(SourceIP).(string)
 	path := ctx.Value(Path).(string)
 	method := ctx.Value(Method).(string)
+	username := ctx.Value(Username)
+	userId := ctx.Value(UserId)
 
 	requestGroup := slog.Group(
 		string(Request),
@@ -25,6 +27,8 @@ func (l FiberHandler) Handle(ctx context.Context, r slog.Record) error {
 		slog.String(string(SourceIP), sourceIp),
 		slog.String(string(Method), method),
 		slog.String(string(Path), path),
+		slog.Any(string(Username), username),
+		slog.Any(string(UserId), userId),
 	)
 
 	r.AddAttrs(requestGroup)
