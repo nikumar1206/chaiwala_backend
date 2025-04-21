@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"strconv"
 
@@ -17,14 +16,14 @@ import (
 	"ChaiwalaBackend/routes/favorites"
 	"ChaiwalaBackend/routes/recipes"
 	"ChaiwalaBackend/routes/users"
-
-	_ "net/http/pprof"
+	"ChaiwalaBackend/utils"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5"
 )
 
 type AppConfig struct {
+	APP_ENV               string
 	PORT                  string
 	AWS_REGION            string
 	AWS_ACCESS_KEY_ID     string
@@ -34,9 +33,10 @@ type AppConfig struct {
 }
 
 func newAppConfig() *AppConfig {
-	logLevel := Must(strconv.Atoi((os.Getenv("LOG_LEVEL"))))
+	logLevel := utils.Must(strconv.Atoi((os.Getenv("LOG_LEVEL"))))
 
 	return &AppConfig{
+		APP_ENV:               os.Getenv("APP_ENV"),
 		PORT:                  ":" + os.Getenv("PORT"),
 		AWS_REGION:            os.Getenv("AWS_REGION"),
 		AWS_ACCESS_KEY_ID:     os.Getenv("AWS_ACCESS_KEY_ID"),
@@ -49,12 +49,7 @@ func newAppConfig() *AppConfig {
 func main() {
 	ac := newAppConfig()
 
-	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level:     ac.LOG_LEVEL,
-		AddSource: true,
-	})
-
-	logger := slog.New(logger.FiberHandler{Handler: handler})
+	logger := slog.New(logger.CustomHandler{Handler: getLoggerHandler(ac)})
 	slog.SetDefault(logger)
 
 	app := fiber.New()
@@ -63,7 +58,8 @@ func main() {
 	app.Use(middlewares.Timing())
 	app.Use(middlewares.JWT())
 
-	conn := Must(pgx.Connect(context.Background(), "user=nikhil dbname=chaiwala sslmode=verify-full"))
+	conn := utils.Must(pgx.Connect(context.Background(), "user=nikhil dbname=chaiwala sslmode=verify-full"))
+	//nolint:errcheck
 	defer conn.Close(context.Background())
 
 	dbConn := db.New(conn)
@@ -79,15 +75,28 @@ func main() {
 	app.Get("", func(c fiber.Ctx) error {
 		return c.SendString("Hello, World 👋!")
 	})
-	go func() {
-		fmt.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+
 	routes := app.GetRoutes(true)
 
 	for _, route := range routes {
 		fmt.Printf("%s %s\n", route.Method, route.Path)
 	}
-	app.Listen(ac.PORT, fiber.ListenConfig{
-		DisableStartupMessage: true,
+
+	utils.LogThrowable(
+		context.Background(),
+		app.Listen(ac.PORT, fiber.ListenConfig{DisableStartupMessage: true}))
+}
+
+func getLoggerHandler(ac *AppConfig) slog.Handler {
+	if ac.APP_ENV == "PRODUCTION" {
+		return slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level:     ac.LOG_LEVEL,
+			AddSource: true,
+		})
+	}
+
+	return slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     ac.LOG_LEVEL,
+		AddSource: true,
 	})
 }

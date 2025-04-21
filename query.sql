@@ -135,7 +135,8 @@ WHERE id = $1;
 -- name: FavoriteRecipe :exec
 INSERT INTO favorites (user_id, recipe_id)
 VALUES ($1, $2)
-ON CONFLICT DO NOTHING;
+ON CONFLICT DO NOTHING
+RETURNING *;
 
 -- name: UnfavoriteRecipe :exec
 DELETE FROM favorites

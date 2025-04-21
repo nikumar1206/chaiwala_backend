@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 
+	"ChaiwalaBackend/clients/jwt"
 	"ChaiwalaBackend/db"
-	"ChaiwalaBackend/jwt"
 	common "ChaiwalaBackend/routes"
 
 	"github.com/gofiber/fiber/v3"
@@ -39,7 +39,6 @@ func registerUser(dbConn *db.Queries) fiber.Handler {
 			c.Status(500)
 			return c.JSON(common.Error{
 				Message:   "User could not be created",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -56,14 +55,12 @@ func registerUser(dbConn *db.Queries) fiber.Handler {
 				c.Status(409)
 				return c.JSON(common.Error{
 					Message:   "Username already taken.",
-					Context:   err.Error(),
 					RequestId: c.GetRespHeader("X-Request-ID"),
 				})
 			}
 			c.Status(500)
 			return c.JSON(common.Error{
 				Message:   "User could not be created",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -72,7 +69,6 @@ func registerUser(dbConn *db.Queries) fiber.Handler {
 			c.Status(500)
 			return c.JSON(common.Error{
 				Message:   "Could not generate a JWT",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -99,7 +95,6 @@ func loginUser(dbConn *db.Queries) fiber.Handler {
 			c.Status(http.StatusNotFound)
 			return c.JSON(common.Error{
 				Message:   "User not found.",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -109,7 +104,6 @@ func loginUser(dbConn *db.Queries) fiber.Handler {
 			c.Status(http.StatusUnauthorized)
 			return c.JSON(common.Error{
 				Message:   "Incorrect password",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -119,7 +113,6 @@ func loginUser(dbConn *db.Queries) fiber.Handler {
 			c.Status(500)
 			return c.JSON(common.Error{
 				Message:   "Could not generate a JWT",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -150,7 +143,6 @@ func refreshRoute(dbConn *db.Queries) fiber.Handler {
 			c.Status(401)
 			return c.JSON(common.Error{
 				Message:   "Not a Valid Token",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 
@@ -162,7 +154,6 @@ func refreshRoute(dbConn *db.Queries) fiber.Handler {
 			c.Status(500)
 			return c.JSON(common.Error{
 				Message:   "Could not generate a JWT",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}

@@ -8,6 +8,7 @@ import (
 
 	"ChaiwalaBackend/clients/s3"
 	"ChaiwalaBackend/routes"
+	"ChaiwalaBackend/utils"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
@@ -36,7 +37,7 @@ func uploadItem(s3Client s3.S3Client) fiber.Handler {
 		if err != nil {
 			return routes.SendErrorResponse(c, 422, "Unable to open the provided file. Please make sure its complete.")
 		}
-		defer f.Close()
+		defer utils.LogThrowable(c.Context(), f.Close())
 
 		fileId := uuid.NewString()
 		s3Path := fmt.Sprintf("images/%s", fileId)

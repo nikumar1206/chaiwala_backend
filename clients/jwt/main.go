@@ -12,6 +12,10 @@ import (
 var (
 	SIGNING_KEY = []byte(os.Getenv("SIGNING_KEY"))
 	issuer      = "chaiwala"
+
+	ErrInvalidToken         = errors.New("Invalid token")
+	ErrExpiredToken         = errors.New("Expired token")
+	ErrInvalidSigningMethod = errors.New("Unexpected signing method")
 )
 
 type Claims struct {
@@ -60,18 +64,18 @@ func ValidateToken(token string) (Claims, error) {
 
 	t, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("Unexpected signing method")
+			return nil, ErrInvalidSigningMethod
 		}
 		return SIGNING_KEY, nil
 	})
 
 	if err != nil || !t.Valid {
 		fmt.Println(err.Error())
-		return *claims, errors.New("Invalid or expired token")
+		return *claims, ErrInvalidToken
 	}
 
 	if claims.ExpiresAt == nil || claims.ExpiresAt.Time.Before(time.Now()) {
-		return *claims, errors.New("Token has expired")
+		return *claims, ErrExpiredToken
 	}
 	return *claims, nil
 }

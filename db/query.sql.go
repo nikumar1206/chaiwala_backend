@@ -239,6 +239,7 @@ const favoriteRecipe = `-- name: FavoriteRecipe :exec
 INSERT INTO favorites (user_id, recipe_id)
 VALUES ($1, $2)
 ON CONFLICT DO NOTHING
+RETURNING user_id, recipe_id, created_at
 `
 
 type FavoriteRecipeParams struct {

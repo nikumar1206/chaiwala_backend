@@ -2,12 +2,13 @@ package middlewares
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
-	jwtD "ChaiwalaBackend/jwt"
+	jwtD "ChaiwalaBackend/clients/jwt"
 	logger "ChaiwalaBackend/logging"
+	"ChaiwalaBackend/routes"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -15,15 +16,15 @@ import (
 func JWT() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		path := c.Path()
-		fmt.Println("called jwt")
 		if path == "/auth/login" || path == "/auth/register" {
+			slog.InfoContext(c.Context(), "skipping on auth routes")
 			return c.Next()
 		}
 
 		tokenStr := strings.TrimPrefix(c.Get("Authorization"), "Bearer ")
 		claims, err := jwtD.ValidateToken(tokenStr)
 		if err != nil {
-			return fiber.NewError(http.StatusUnauthorized, err.Error())
+			return routes.SendErrorResponse(c, http.StatusUnauthorized, err.Error())
 		}
 		c.Locals("username", claims.Username)
 		c.Locals("userId", claims.UserID)

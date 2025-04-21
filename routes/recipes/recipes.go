@@ -60,7 +60,6 @@ func createRecipe(dbConn *db.Queries) fiber.Handler {
 		if err := c.Bind().JSON(&r); err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid input",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -79,7 +78,6 @@ func createRecipe(dbConn *db.Queries) fiber.Handler {
 			fmt.Println(err)
 			return c.Status(http.StatusInternalServerError).JSON(common.Error{
 				Message:   "Failed to create recipe",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -93,7 +91,6 @@ func updateRecipe(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid recipe ID",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -101,7 +98,6 @@ func updateRecipe(dbConn *db.Queries) fiber.Handler {
 		if err := c.Bind().JSON(&r); err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid input",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -118,7 +114,6 @@ func updateRecipe(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(common.Error{
 				Message:   "Failed to update recipe",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -132,7 +127,6 @@ func deleteRecipe(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid recipe ID",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -140,7 +134,6 @@ func deleteRecipe(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(common.Error{
 				Message:   "Failed to delete recipe",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -154,7 +147,6 @@ func listRecipeComments(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid recipe ID",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -163,7 +155,6 @@ func listRecipeComments(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(common.Error{
 				Message:   "Failed to fetch comments",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}

@@ -5,11 +5,11 @@ import (
 	"log/slog"
 )
 
-type FiberHandler struct {
+type CustomHandler struct {
 	slog.Handler
 }
 
-func (l FiberHandler) Handle(ctx context.Context, r slog.Record) error {
+func (l CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	if ctx.Value(RequestId) == nil {
 		return l.Handler.Handle(ctx, r)
 	}

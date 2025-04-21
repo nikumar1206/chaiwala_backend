@@ -2,7 +2,6 @@ package favorites
 
 import (
 	"net/http"
-	"strconv"
 
 	"ChaiwalaBackend/db"
 	common "ChaiwalaBackend/routes"
@@ -14,7 +13,7 @@ func BuildRouter(app *fiber.App, dbConn *db.Queries) *fiber.Router {
 	favoriteRouter := app.Group("/favorites")
 
 	favoriteRouter.Post("", favoriteRecipe(dbConn))
-	favoriteRouter.Delete("/:favoriteId", unfavoriteRecipe(dbConn))
+	favoriteRouter.Delete("", unfavoriteRecipe(dbConn))
 
 	return &favoriteRouter
 }
@@ -39,12 +38,12 @@ func favoriteRecipe(dbConn *db.Queries) fiber.Handler {
 
 func unfavoriteRecipe(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		favoriteID, err := strconv.Atoi(c.Params("favoriteId"))
-		if err != nil {
-			return common.SendErrorResponse(c, http.StatusBadRequest, "Invalid Favorite ID.")
+		favBody := new(Favorite)
+		if err := c.Bind().JSON(favBody); err != nil {
+			return err
 		}
 
-		err = dbConn.UnfavoriteRecipe(c.Context(), db.UnfavoriteRecipeParams{UserID: int32(favoriteID)})
+		err := dbConn.UnfavoriteRecipe(c.Context(), db.UnfavoriteRecipeParams{UserID: int32(favBody.UserID), RecipeID: favBody.RecipeID})
 		if err != nil {
 			return common.SendErrorResponse(c, http.StatusInternalServerError, "Could not unfavorite the recipe")
 		}

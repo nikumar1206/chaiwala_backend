@@ -30,7 +30,6 @@ func getUser(dbConn *db.Queries) fiber.Handler {
 			fmt.Print(err)
 			return c.JSON(common.Error{
 				Message:   "User not found.",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -44,7 +43,6 @@ func listUserRecipes(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid user ID",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -52,7 +50,6 @@ func listUserRecipes(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(common.Error{
 				Message:   "Failed to fetch user recipes",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -68,7 +65,6 @@ func listUserFavorites(dbConn *db.Queries) fiber.Handler {
 			c.Status(500)
 			return c.JSON(common.Error{
 				Message:   "Could not retrieve favorites",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -83,7 +79,6 @@ func listUserComments(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(common.Error{
 				Message:   "Invalid user ID",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
@@ -92,7 +87,6 @@ func listUserComments(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(common.Error{
 				Message:   "Failed to fetch user comments",
-				Context:   err.Error(),
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
