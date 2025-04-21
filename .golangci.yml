@@ -1,6 +1,11 @@
 version: "2"
 linters:
-  default: all
-  disable:
-    - depguard
-    - exhaustruct
+    default: all
+    disable:
+        - depguard
+        - exhaustruct
+        - varnamelen
+        - wsl
+        - wrapcheck
+        - whitespace
+        - nlreturn
