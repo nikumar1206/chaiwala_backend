@@ -37,10 +37,10 @@ clean: ## Clean up the project directory and tidy modules
 build-linux: clean ## Build the application for Linux
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v
 
-reload: clean ## Run the demo restauraunt app locally with reload enabled
+reload: clean ## Run app with reload enabled. Requires Air
 	@(air --build.cmd "lsof -ti:8000 | xargs -r kill -9; $(GOBUILD) -o $(BINARY_NAME) ." --build.bin "./$(BINARY_NAME)")
 
-run: clean ## Run the demo restauraunt app locally with reload enabled
+run: clean ## Run app.
 	@(go run .)
 
 help: ## show help

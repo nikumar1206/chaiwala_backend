@@ -28,14 +28,14 @@ func uploadItem(s3Client s3.S3Client) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		file, err := c.FormFile("file")
 		if err != nil {
-			return routes.SendErrorResponse(c, 422, "Request must include a Mulipart file under attribute 'file'")
+			return routes.SendErrorResponse(c, fiber.StatusUnprocessableEntity, "Request must include a Mulipart file under attribute 'file'")
 		}
 
 		contentType := getContentType(file.Header)
 
 		f, err := file.Open()
 		if err != nil {
-			return routes.SendErrorResponse(c, 422, "Unable to open the provided file. Please make sure its complete.")
+			return routes.SendErrorResponse(c, fiber.StatusUnprocessableEntity, "Unable to open the provided file. Please make sure its complete.")
 		}
 		defer utils.LogThrowable(c.Context(), f.Close())
 
@@ -64,7 +64,7 @@ func getItem(s3Client s3.S3Client) fiber.Handler {
 		fileId := c.Params("fileId")
 
 		if fileId == "" {
-			return routes.SendErrorResponse(c, 422, "No fileId provided")
+			return routes.SendErrorResponse(c, fiber.StatusUnprocessableEntity, "No fileId provided")
 		}
 		fmt.Println("what was fileid", fileId)
 		key := fmt.Sprintf("images/%s", fileId)
