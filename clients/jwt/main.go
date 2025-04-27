@@ -2,16 +2,18 @@ package jwt
 
 import (
 	"errors"
-	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
+	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 var (
 	SIGNING_KEY = []byte(os.Getenv("SIGNING_KEY"))
-	issuer      = "chaiwala"
+	// todo(nick): pull from app config
+	issuer = "chaiwala"
 
 	ErrInvalidToken         = errors.New("Invalid token")
 	ErrExpiredToken         = errors.New("Expired token")
@@ -28,10 +30,10 @@ func GenerateTokens(username string, userId int32) (string, string, time.Time, e
 	accessExp := time.Now().Add(4 * time.Hour)
 	claims := Claims{
 		Username: username,
+		UserID:   userId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExp),
-			// todo(nick): pull from app config
-			Issuer: issuer,
+			Issuer:    issuer,
 		},
 	}
 
@@ -59,7 +61,7 @@ func GenerateTokens(username string, userId int32) (string, string, time.Time, e
 	return signedToken, refreshToken, accessExp, nil
 }
 
-func ValidateToken(token string) (Claims, error) {
+func ValidateToken(c fiber.Ctx, token string) (Claims, error) {
 	claims := new(Claims)
 
 	t, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (any, error) {
@@ -69,13 +71,14 @@ func ValidateToken(token string) (Claims, error) {
 		return SIGNING_KEY, nil
 	})
 
-	if err != nil || !t.Valid {
-		fmt.Println(err.Error())
-		return *claims, ErrInvalidToken
-	}
-
 	if claims.ExpiresAt == nil || claims.ExpiresAt.Time.Before(time.Now()) {
 		return *claims, ErrExpiredToken
 	}
+
+	if err != nil || !t.Valid {
+		slog.ErrorContext(c.Context(), err.Error())
+		return *claims, ErrInvalidToken
+	}
+
 	return *claims, nil
 }

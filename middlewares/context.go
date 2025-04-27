@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 
 	logger "ChaiwalaBackend/logging"
 
@@ -12,7 +12,7 @@ import (
 
 func SetContext() fiber.Handler {
 	return func(c fiber.Ctx) error {
-		fmt.Println("called set context")
+		slog.Debug("adding additional request context")
 		requestId := uuid.NewString()
 		ctx := c.Context()
 

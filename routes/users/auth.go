@@ -91,6 +91,7 @@ func loginUser(dbConn *db.Queries) fiber.Handler {
 		}
 		usr, err := dbConn.GetUserByUsername(c.Context(), u.Username)
 		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
 			fmt.Print(err)
 			c.Status(http.StatusNotFound)
 			return c.JSON(common.Error{
@@ -133,32 +134,18 @@ func loginUser(dbConn *db.Queries) fiber.Handler {
 
 func refreshRoute(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		req := new(RefreshTokenRequest)
-		if err := c.Bind().JSON(req); err != nil {
-			return err
-		}
-
-		claims, err := jwt.ValidateToken(req.RefreshToken)
-		if err != nil {
-			c.Status(401)
-			return c.JSON(common.Error{
-				Message:   "Not a Valid Token",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
-
-		}
+		claims := c.Locals("claims").(jwt.Claims)
 
 		// todo(nick): need to revoke previous Refresh
 		newAccess, newRefresh, exp, err := jwt.GenerateTokens(claims.Username, claims.UserID)
 		if err != nil {
-			c.Status(500)
-			return c.JSON(common.Error{
-				Message:   "Could not generate a JWT",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Could not generate JWT")
 		}
-		c.Status(200)
-		return c.JSON(GeneratedJWTResponse{
+
+		// maybe return user info?
+		slog.InfoContext(c.Context(), "success")
+		return c.Status(200).JSON(GeneratedJWTResponse{
 			AccessToken:  newAccess,
 			RefreshToken: newRefresh,
 			ExpiresIn:    exp.UnixMilli(),

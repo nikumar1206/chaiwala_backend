@@ -1,7 +1,7 @@
 package recipes
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -30,6 +30,7 @@ func listPublicRecipes(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		recipes, err := dbConn.ListPublicRecipes(c.Context())
 		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
 			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to fetch recipes")
 		}
 		if recipes == nil {
@@ -63,24 +64,25 @@ func createRecipe(dbConn *db.Queries) fiber.Handler {
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
-
+		userId := c.Locals("userId").(int32)
 		recipe, err := dbConn.CreateRecipe(c.Context(), db.CreateRecipeParams{
-			UserID:          pgtype.Int4{Int32: r.UserID, Valid: true},
+			UserID:          pgtype.Int4{Int32: userId, Valid: true},
 			Title:           r.Title,
 			Description:     r.Description,
-			Instructions:    r.Instructions,
+			Instructions:    "",
 			AssetID:         r.AssetId,
 			PrepTimeMinutes: pgtype.Int4{Int32: r.PrepTimeMinutes, Valid: true},
 			Servings:        pgtype.Int4{Int32: r.Servings, Valid: true},
 			IsPublic:        pgtype.Bool{Bool: r.IsPublic, Valid: true},
 		})
 		if err != nil {
-			fmt.Println(err)
+			slog.ErrorContext(c.Context(), err.Error())
 			return c.Status(http.StatusInternalServerError).JSON(common.Error{
 				Message:   "Failed to create recipe",
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
+		slog.InfoContext(c.Context(), "success")
 		return c.Status(http.StatusCreated).JSON(recipe)
 	}
 }

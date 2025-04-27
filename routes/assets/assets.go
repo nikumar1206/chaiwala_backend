@@ -40,7 +40,7 @@ func uploadItem(s3Client s3.S3Client) fiber.Handler {
 		defer utils.LogThrowable(c.Context(), f.Close())
 
 		fileId := uuid.NewString()
-		s3Path := fmt.Sprintf("images/%s", fileId)
+		s3Path := "images/" + fileId
 
 		err = s3Client.Upload(
 			c.Context(),
@@ -66,7 +66,7 @@ func getItem(s3Client s3.S3Client) fiber.Handler {
 		if fileId == "" {
 			return routes.SendErrorResponse(c, fiber.StatusUnprocessableEntity, "No fileId provided")
 		}
-		fmt.Println("what was fileid", fileId)
+		slog.InfoContext(c.Context(), "request for file", slog.String("fileId", fileId))
 		key := fmt.Sprintf("images/%s", fileId)
 		startTime := time.Now()
 		resp, err := s3Client.Download(c.Context(), key)
@@ -75,12 +75,12 @@ func getItem(s3Client s3.S3Client) fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).SendString("Failed to download file from S3")
 		}
 
-		fmt.Println("time since download", time.Since(startTime).String())
+		slog.InfoContext(c.Context(), "time since download", slog.String("duration", time.Since(startTime).String()))
 
 		if resp.ContentType != nil {
 			c.Set("Content-Type", *resp.ContentType)
 		}
-		fmt.Println("what was the resp.content", *resp.ContentType)
+		slog.InfoContext(c.Context(), "what was resp.content", slog.String("contentType", *resp.ContentType))
 		if resp.ContentLength != nil && *resp.ContentLength > 0 {
 			c.Set("Content-Length", fmt.Sprintf("%d", resp.ContentLength))
 		}

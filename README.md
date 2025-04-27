@@ -17,3 +17,28 @@
 - find way to remove passwordDigestoffset
 - remove brew time as a database thingy
     - will eventually need to a db migration
+- keep ingredients list, call it required ingredients or something as just list[str], nothing in DB for now
+- add tea types
+```go
+
+type TeaType int
+
+const (
+	Black TeaType = iota
+	Green
+	White
+	Oolong
+	PuErh
+	Yellow
+	Herbal
+	Rooibos
+	YerbaMate
+	Matcha
+	Chai
+	Flavored
+	Blooming
+)
+```
+- implement recipe steps
+- auto refresh on frontend
+- revoke refresh on Backend
