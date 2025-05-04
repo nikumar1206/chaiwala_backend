@@ -21,7 +21,7 @@ ORDER BY created_at DESC;
 
 -- name: GetRecipe :one
 SELECT * FROM recipes
-WHERE id = $1 AND is_public = true;
+WHERE id = $1;
 
 -- name: ListUserRecipes :many
 SELECT * FROM recipes

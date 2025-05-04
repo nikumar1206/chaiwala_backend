@@ -8,7 +8,6 @@ import (
 	"ChaiwalaBackend/db"
 	logger "ChaiwalaBackend/logging"
 	common "ChaiwalaBackend/routes"
-	"ChaiwalaBackend/utils"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5"
@@ -46,12 +45,14 @@ func listPublicRecipes(dbConn *db.Queries) fiber.Handler {
 func getRecipeByID(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("recipeId"))
+		slog.InfoContext(c.Context(), "get recipe by id", slog.Int("id", id))
 		if err != nil {
 			return common.SendErrorResponse(c, http.StatusUnprocessableEntity, "Invalid Request ID")
 		}
 
 		recipe, err := dbConn.GetRecipe(c.Context(), int32(id))
 		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
 			return common.SendErrorResponse(c, http.StatusNotFound, "Recipe not found")
 		}
 
@@ -99,7 +100,13 @@ func createRecipe(conn *pgx.Conn) fiber.Handler {
 			return common.SendErrorResponse(c, http.StatusInternalServerError, "Sorry, something went wrong. Please try again later.")
 		}
 
-		defer utils.LogThrowable(c.Context(), tx.Rollback(c.Context()))
+		defer func() {
+			if err != nil {
+				if rbErr := tx.Rollback(c.Context()); rbErr != nil {
+					slog.ErrorContext(c.Context(), err.Error())
+				}
+			}
+		}()
 
 		q := db.New(tx)
 		userId := c.Locals(logger.UserId).(int32)
@@ -115,12 +122,9 @@ func createRecipe(conn *pgx.Conn) fiber.Handler {
 		})
 		if err != nil {
 			slog.ErrorContext(c.Context(), err.Error())
-			return c.Status(http.StatusInternalServerError).JSON(common.Error{
-				Message:   "Failed to create recipe",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to create recipe")
 		}
-
+		slog.InfoContext(c.Context(), "scheduled recipe", slog.Int("recipeId", int(recipe.ID)))
 		for _, step := range r.Steps {
 			_, err := q.AddRecipeStep(c.Context(), db.AddRecipeStepParams{
 				RecipeID:    pgtype.Int4{Int32: recipe.ID, Valid: true},
@@ -130,13 +134,17 @@ func createRecipe(conn *pgx.Conn) fiber.Handler {
 			})
 			if err != nil {
 				slog.ErrorContext(c.Context(), err.Error())
-				return c.Status(http.StatusInternalServerError).JSON(common.Error{
-					Message:   "Failed to create recipe",
-					RequestId: c.GetRespHeader("X-Request-ID"),
-				})
+				return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to create recipe")
 			}
 		}
-		tx.Commit(c.Context())
+		slog.InfoContext(c.Context(), "scheduled steps")
+
+		err = tx.Commit(c.Context())
+		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to commit transaction")
+		}
+
 		slog.InfoContext(c.Context(), "success")
 		return c.Status(http.StatusCreated).JSON(recipe)
 	}
@@ -159,7 +167,13 @@ func updateRecipe(conn *pgx.Conn) fiber.Handler {
 			slog.ErrorContext(c.Context(), err.Error())
 			return common.SendErrorResponse(c, http.StatusInternalServerError, "Sorry, something went wrong. Please try again later.")
 		}
-		defer utils.LogThrowable(c.Context(), tx.Rollback(c.Context()))
+		defer func() {
+			if err != nil {
+				slog.ErrorContext(c.Context(), err.Error())
+				tx.Rollback(c.Context())
+			}
+		}()
+
 		q := db.New(tx)
 
 		err = q.UpdateRecipe(c.Context(), db.UpdateRecipeParams{

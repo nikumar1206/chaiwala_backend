@@ -12,11 +12,11 @@ func Timing() fiber.Handler {
 		start := time.Now()
 
 		err := c.Next()
-
 		slog.InfoContext(
 			c.Context(),
 			"handled request",
 			slog.String("duration", time.Since(start).String()),
+			slog.Int("statusCode", c.Response().StatusCode()),
 		)
 
 		return err

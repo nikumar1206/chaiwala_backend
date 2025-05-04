@@ -58,7 +58,6 @@ type SavedStep struct {
 type CreateRecipeBody struct {
 	Title           string `json:"title"`
 	Description     string `json:"description"`
-	Instructions    string `json:"instructions"`
 	TeaType         int    `json:"teaType"`
 	Steps           []Step `json:"steps"`
 	AssetId         string `json:"assetId"`
@@ -70,7 +69,6 @@ type CreateRecipeBody struct {
 type UpdateRecipeBody struct {
 	Title           string          `json:"title"`
 	Description     string          `json:"description"`
-	Instructions    string          `json:"instructions"`
 	Steps           []db.RecipeStep `json:"steps"`
 	TeaType         int             `json:"teaType"`
 	AssetID         string          `json:"assetId"`

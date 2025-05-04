@@ -16,8 +16,9 @@
 - add tea types
 - im actually not a big fan of these logging. for the context key. lets remove and just make them constants elsewhere
 - revoke refresh on Backend
+- user should be able to see their recipes, whether it is public or not, but others should only be able to see public recipes. pattern will be stopped on frontend, but backend should have as well.
 
-Done from TODO:
+##### Done from TODO:
 
 - implement recipe steps
 - auto refresh on frontend

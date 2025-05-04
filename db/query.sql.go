@@ -205,7 +205,7 @@ func (q *Queries) FavoriteRecipe(ctx context.Context, arg FavoriteRecipeParams) 
 
 const getRecipe = `-- name: GetRecipe :one
 SELECT id, user_id, title, description, type, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
-WHERE id = $1 AND is_public = true
+WHERE id = $1
 `
 
 func (q *Queries) GetRecipe(ctx context.Context, id int32) (Recipe, error) {
