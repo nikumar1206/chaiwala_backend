@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"ChaiwalaBackend/db"
+	logger "ChaiwalaBackend/logging"
 	common "ChaiwalaBackend/routes"
 
 	"github.com/gofiber/fiber/v3"
@@ -64,12 +65,12 @@ func createRecipe(dbConn *db.Queries) fiber.Handler {
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
-		userId := c.Locals("userId").(int32)
+		userId := c.Locals(logger.UserId).(int32)
 		recipe, err := dbConn.CreateRecipe(c.Context(), db.CreateRecipeParams{
 			UserID:          pgtype.Int4{Int32: userId, Valid: true},
 			Title:           r.Title,
 			Description:     r.Description,
-			Instructions:    "",
+			Type:            int32(TTChai),
 			AssetID:         r.AssetId,
 			PrepTimeMinutes: pgtype.Int4{Int32: r.PrepTimeMinutes, Valid: true},
 			Servings:        pgtype.Int4{Int32: r.Servings, Valid: true},
@@ -107,7 +108,7 @@ func updateRecipe(dbConn *db.Queries) fiber.Handler {
 			ID:              int32(id),
 			Title:           r.Title,
 			Description:     r.Description,
-			Instructions:    r.Instructions,
+			Type:            int32(TTBlack),
 			AssetID:         r.AssetId,
 			PrepTimeMinutes: pgtype.Int4{Int32: r.PrepTimeMinutes, Valid: true},
 			Servings:        pgtype.Int4{Int32: r.Servings, Valid: true},

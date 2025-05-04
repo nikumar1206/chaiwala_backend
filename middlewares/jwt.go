@@ -30,13 +30,13 @@ func JWT() fiber.Handler {
 		}
 
 		// set necessary contextvars
-		c.Locals(logger.Username, claims.Username)
+		c.Locals(logger.Email, claims.Email)
 		c.Locals(logger.UserId, claims.UserID)
 		c.Locals("token", tokenStr)
 		c.Locals("claims", claims)
 
 		ctx := c.Context()
-		ctx = context.WithValue(ctx, logger.Username, claims.Username)
+		ctx = context.WithValue(ctx, logger.Email, claims.Email)
 		ctx = context.WithValue(ctx, logger.UserId, claims.UserID)
 
 		c.SetContext(ctx)

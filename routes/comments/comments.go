@@ -1,7 +1,7 @@
 package comments
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -35,7 +35,7 @@ func createComment(dbConn *db.Queries) fiber.Handler {
 			Comment:  comment.Comment,
 		})
 		if err != nil {
-			fmt.Println(err)
+			slog.ErrorContext(c.Context(), err.Error())
 			return common.SendErrorResponse(c, http.StatusBadRequest, "Failed to create comment.")
 		}
 		return c.Status(http.StatusCreated).JSON(createdComment)

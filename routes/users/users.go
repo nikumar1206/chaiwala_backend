@@ -1,7 +1,7 @@
 package users
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -27,11 +27,8 @@ func getUser(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		usr, err := dbConn.GetUser(c.Context(), 1)
 		if err != nil {
-			fmt.Print(err)
-			return c.JSON(common.Error{
-				Message:   "User not found.",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusNotFound, "User not found")
 		}
 		return c.JSON(usr)
 	}

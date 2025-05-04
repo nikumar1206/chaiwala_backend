@@ -14,17 +14,12 @@ type Favorite struct {
 	CreatedAt pgtype.Timestamp `json:"createdAt"`
 }
 
-type Ingredient struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
-}
-
 type Recipe struct {
 	ID              int32            `json:"id"`
 	UserID          pgtype.Int4      `json:"userId"`
 	Title           string           `json:"title"`
 	Description     string           `json:"description"`
-	Instructions    string           `json:"instructions"`
+	Type            int32            `json:"type"`
 	AssetID         string           `json:"assetId"`
 	PrepTimeMinutes pgtype.Int4      `json:"prepTimeMinutes"`
 	Servings        pgtype.Int4      `json:"servings"`
@@ -41,13 +36,6 @@ type RecipeComment struct {
 	CreatedAt pgtype.Timestamp `json:"createdAt"`
 }
 
-type RecipeIngredient struct {
-	ID           int32       `json:"id"`
-	RecipeID     pgtype.Int4 `json:"recipeId"`
-	IngredientID pgtype.Int4 `json:"ingredientId"`
-	Quantity     pgtype.Text `json:"quantity"`
-}
-
 type RecipeStep struct {
 	ID          int32       `json:"id"`
 	RecipeID    pgtype.Int4 `json:"recipeId"`
@@ -56,21 +44,10 @@ type RecipeStep struct {
 	AssetID     pgtype.Text `json:"assetId"`
 }
 
-type RecipeTag struct {
-	RecipeID int32 `json:"recipeId"`
-	TagID    int32 `json:"tagId"`
-}
-
-type Tag struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
-}
-
 type User struct {
 	ID           int32            `json:"id"`
-	Username     string           `json:"username"`
 	Email        string           `json:"email"`
-	PasswordHash string           `json:"-"`
+	PasswordHash string           `json:"passwordHash"`
 	Bio          string           `json:"bio"`
 	AvatarUrl    string           `json:"avatarUrl"`
 	CreatedAt    pgtype.Timestamp `json:"createdAt"`

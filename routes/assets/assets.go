@@ -80,7 +80,7 @@ func getItem(s3Client s3.S3Client) fiber.Handler {
 		if resp.ContentType != nil {
 			c.Set("Content-Type", *resp.ContentType)
 		}
-		slog.InfoContext(c.Context(), "what was resp.content", slog.String("contentType", *resp.ContentType))
+		slog.InfoContext(c.Context(), "resp.content=", slog.String("contentType", *resp.ContentType))
 		if resp.ContentLength != nil && *resp.ContentLength > 0 {
 			c.Set("Content-Length", fmt.Sprintf("%d", resp.ContentLength))
 		}

@@ -21,16 +21,16 @@ var (
 )
 
 type Claims struct {
-	Username string `json:"username"`
-	UserID   int32  `json:"userId"`
+	Email  string `json:"email"`
+	UserID int32  `json:"userId"`
 	jwt.RegisteredClaims
 }
 
-func GenerateTokens(username string, userId int32) (string, string, time.Time, error) {
+func GenerateTokens(email string, userId int32) (string, string, time.Time, error) {
 	accessExp := time.Now().Add(4 * time.Hour)
 	claims := Claims{
-		Username: username,
-		UserID:   userId,
+		Email:  email,
+		UserID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(accessExp),
 			Issuer:    issuer,
@@ -45,7 +45,8 @@ func GenerateTokens(username string, userId int32) (string, string, time.Time, e
 	}
 
 	refreshClaims := Claims{
-		Username: username,
+		Email:  email,
+		UserID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 			Issuer:    issuer,
@@ -70,7 +71,6 @@ func ValidateToken(c fiber.Ctx, token string) (Claims, error) {
 		}
 		return SIGNING_KEY, nil
 	})
-
 	if claims.ExpiresAt == nil || claims.ExpiresAt.Time.Before(time.Now()) {
 		return *claims, ErrExpiredToken
 	}

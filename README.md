@@ -19,6 +19,7 @@
     - will eventually need to a db migration
 - keep ingredients list, call it required ingredients or something as just list[str], nothing in DB for now
 - add tea types
+- im actually not a big fan of these logging. for the context key. lets remove and just make them constants elsewhere
 ```go
 
 type TeaType int

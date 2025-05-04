@@ -39,47 +39,6 @@ func (q *Queries) AddComment(ctx context.Context, arg AddCommentParams) (RecipeC
 	return i, err
 }
 
-const addIngredient = `-- name: AddIngredient :one
-INSERT INTO ingredients (name)
-VALUES ($1)
-ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
-RETURNING id, name
-`
-
-func (q *Queries) AddIngredient(ctx context.Context, name string) (Ingredient, error) {
-	row := q.db.QueryRow(ctx, addIngredient, name)
-	var i Ingredient
-	err := row.Scan(&i.ID, &i.Name)
-	return i, err
-}
-
-const addRecipeIngredient = `-- name: AddRecipeIngredient :one
-INSERT INTO recipe_ingredients (
-  recipe_id, ingredient_id, quantity
-) VALUES (
-  $1, $2, $3
-)
-RETURNING id, recipe_id, ingredient_id, quantity
-`
-
-type AddRecipeIngredientParams struct {
-	RecipeID     pgtype.Int4 `json:"recipeId"`
-	IngredientID pgtype.Int4 `json:"ingredientId"`
-	Quantity     pgtype.Text `json:"quantity"`
-}
-
-func (q *Queries) AddRecipeIngredient(ctx context.Context, arg AddRecipeIngredientParams) (RecipeIngredient, error) {
-	row := q.db.QueryRow(ctx, addRecipeIngredient, arg.RecipeID, arg.IngredientID, arg.Quantity)
-	var i RecipeIngredient
-	err := row.Scan(
-		&i.ID,
-		&i.RecipeID,
-		&i.IngredientID,
-		&i.Quantity,
-	)
-	return i, err
-}
-
 const addRecipeStep = `-- name: AddRecipeStep :one
 INSERT INTO recipe_steps (
   recipe_id, step_number, description, asset_id
@@ -114,35 +73,21 @@ func (q *Queries) AddRecipeStep(ctx context.Context, arg AddRecipeStepParams) (R
 	return i, err
 }
 
-const addTag = `-- name: AddTag :one
-INSERT INTO tags (name)
-VALUES ($1)
-ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
-RETURNING id, name
-`
-
-func (q *Queries) AddTag(ctx context.Context, name string) (Tag, error) {
-	row := q.db.QueryRow(ctx, addTag, name)
-	var i Tag
-	err := row.Scan(&i.ID, &i.Name)
-	return i, err
-}
-
 const createRecipe = `-- name: CreateRecipe :one
 INSERT INTO recipes (
-  user_id, title, description, instructions, asset_id,
+  user_id, title, description, type, asset_id,
   prep_time_minutes, servings, is_public
 ) VALUES (
   $1, $2, $3, $4, $5, $6, $7, $8
 )
-RETURNING id, user_id, title, description, instructions, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at
+RETURNING id, user_id, title, description, type, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at
 `
 
 type CreateRecipeParams struct {
 	UserID          pgtype.Int4 `json:"userId"`
 	Title           string      `json:"title"`
 	Description     string      `json:"description"`
-	Instructions    string      `json:"instructions"`
+	Type            int32       `json:"type"`
 	AssetID         string      `json:"assetId"`
 	PrepTimeMinutes pgtype.Int4 `json:"prepTimeMinutes"`
 	Servings        pgtype.Int4 `json:"servings"`
@@ -154,7 +99,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 		arg.UserID,
 		arg.Title,
 		arg.Description,
-		arg.Instructions,
+		arg.Type,
 		arg.AssetID,
 		arg.PrepTimeMinutes,
 		arg.Servings,
@@ -166,7 +111,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 		&i.UserID,
 		&i.Title,
 		&i.Description,
-		&i.Instructions,
+		&i.Type,
 		&i.AssetID,
 		&i.PrepTimeMinutes,
 		&i.Servings,
@@ -179,15 +124,14 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-  username, email, password_hash, bio, avatar_url
+  email, password_hash, bio, avatar_url
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4
 )
-RETURNING id, username, email, password_hash, bio, avatar_url, created_at
+RETURNING id, email, password_hash, bio, avatar_url, created_at
 `
 
 type CreateUserParams struct {
-	Username     string `json:"username"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"passwordHash"`
 	Bio          string `json:"bio"`
@@ -196,7 +140,6 @@ type CreateUserParams struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
-		arg.Username,
 		arg.Email,
 		arg.PasswordHash,
 		arg.Bio,
@@ -205,7 +148,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
 		&i.Email,
 		&i.PasswordHash,
 		&i.Bio,
@@ -239,7 +181,6 @@ const favoriteRecipe = `-- name: FavoriteRecipe :exec
 INSERT INTO favorites (user_id, recipe_id)
 VALUES ($1, $2)
 ON CONFLICT DO NOTHING
-RETURNING user_id, recipe_id, created_at
 `
 
 type FavoriteRecipeParams struct {
@@ -253,7 +194,7 @@ func (q *Queries) FavoriteRecipe(ctx context.Context, arg FavoriteRecipeParams) 
 }
 
 const getRecipe = `-- name: GetRecipe :one
-SELECT id, user_id, title, description, instructions, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+SELECT id, user_id, title, description, type, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
 WHERE id = $1 AND is_public = true
 `
 
@@ -265,7 +206,7 @@ func (q *Queries) GetRecipe(ctx context.Context, id int32) (Recipe, error) {
 		&i.UserID,
 		&i.Title,
 		&i.Description,
-		&i.Instructions,
+		&i.Type,
 		&i.AssetID,
 		&i.PrepTimeMinutes,
 		&i.Servings,
@@ -277,7 +218,7 @@ func (q *Queries) GetRecipe(ctx context.Context, id int32) (Recipe, error) {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, username, email, password_hash, bio, avatar_url, created_at FROM users
+SELECT id, email, password_hash, bio, avatar_url, created_at FROM users
 WHERE id = $1
 `
 
@@ -286,7 +227,6 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
 		&i.Email,
 		&i.PasswordHash,
 		&i.Bio,
@@ -296,17 +236,16 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	return i, err
 }
 
-const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, email, password_hash, bio, avatar_url, created_at FROM users
-WHERE username = $1
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, password_hash, bio, avatar_url, created_at FROM users
+WHERE email = $1
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByUsername, username)
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
 		&i.Email,
 		&i.PasswordHash,
 		&i.Bio,
@@ -336,7 +275,7 @@ func (q *Queries) IsRecipeFavorited(ctx context.Context, arg IsRecipeFavoritedPa
 }
 
 const listComments = `-- name: ListComments :many
-SELECT rc.comment, rc.created_at, u.username, u.avatar_url
+SELECT rc.comment, rc.created_at, u.email, u.avatar_url
 FROM recipe_comments rc
 JOIN users u ON rc.user_id = u.id
 WHERE rc.recipe_id = $1
@@ -346,7 +285,7 @@ ORDER BY rc.created_at DESC
 type ListCommentsRow struct {
 	Comment   string           `json:"comment"`
 	CreatedAt pgtype.Timestamp `json:"createdAt"`
-	Username  string           `json:"username"`
+	Email     string           `json:"email"`
 	AvatarUrl string           `json:"avatarUrl"`
 }
 
@@ -362,7 +301,7 @@ func (q *Queries) ListComments(ctx context.Context, recipeID pgtype.Int4) ([]Lis
 		if err := rows.Scan(
 			&i.Comment,
 			&i.CreatedAt,
-			&i.Username,
+			&i.Email,
 			&i.AvatarUrl,
 		); err != nil {
 			return nil, err
@@ -408,7 +347,7 @@ func (q *Queries) ListCommentsByUser(ctx context.Context, userID pgtype.Int4) ([
 }
 
 const listPublicRecipes = `-- name: ListPublicRecipes :many
-SELECT id, user_id, title, description, instructions, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+SELECT id, user_id, title, description, type, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
 WHERE is_public = true
 ORDER BY created_at DESC
 `
@@ -427,7 +366,7 @@ func (q *Queries) ListPublicRecipes(ctx context.Context) ([]Recipe, error) {
 			&i.UserID,
 			&i.Title,
 			&i.Description,
-			&i.Instructions,
+			&i.Type,
 			&i.AssetID,
 			&i.PrepTimeMinutes,
 			&i.Servings,
@@ -435,38 +374,6 @@ func (q *Queries) ListPublicRecipes(ctx context.Context) ([]Recipe, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listRecipeIngredients = `-- name: ListRecipeIngredients :many
-SELECT ri.quantity, i.name
-FROM recipe_ingredients ri
-JOIN ingredients i ON ri.ingredient_id = i.id
-WHERE ri.recipe_id = $1
-`
-
-type ListRecipeIngredientsRow struct {
-	Quantity pgtype.Text `json:"quantity"`
-	Name     string      `json:"name"`
-}
-
-func (q *Queries) ListRecipeIngredients(ctx context.Context, recipeID pgtype.Int4) ([]ListRecipeIngredientsRow, error) {
-	rows, err := q.db.Query(ctx, listRecipeIngredients, recipeID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListRecipeIngredientsRow
-	for rows.Next() {
-		var i ListRecipeIngredientsRow
-		if err := rows.Scan(&i.Quantity, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -509,35 +416,8 @@ func (q *Queries) ListRecipeSteps(ctx context.Context, recipeID pgtype.Int4) ([]
 	return items, nil
 }
 
-const listRecipeTags = `-- name: ListRecipeTags :many
-SELECT t.name
-FROM recipe_tags rt
-JOIN tags t ON rt.tag_id = t.id
-WHERE rt.recipe_id = $1
-`
-
-func (q *Queries) ListRecipeTags(ctx context.Context, recipeID int32) ([]string, error) {
-	rows, err := q.db.Query(ctx, listRecipeTags, recipeID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return nil, err
-		}
-		items = append(items, name)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listUserFavorites = `-- name: ListUserFavorites :many
-SELECT r.id, r.user_id, r.title, r.description, r.instructions, r.asset_id, r.prep_time_minutes, r.servings, r.is_public, r.created_at, r.updated_at
+SELECT r.id, r.user_id, r.title, r.description, r.type, r.asset_id, r.prep_time_minutes, r.servings, r.is_public, r.created_at, r.updated_at
 FROM favorites f
 JOIN recipes r ON f.recipe_id = r.id
 WHERE f.user_id = $1
@@ -558,7 +438,7 @@ func (q *Queries) ListUserFavorites(ctx context.Context, userID int32) ([]Recipe
 			&i.UserID,
 			&i.Title,
 			&i.Description,
-			&i.Instructions,
+			&i.Type,
 			&i.AssetID,
 			&i.PrepTimeMinutes,
 			&i.Servings,
@@ -577,7 +457,7 @@ func (q *Queries) ListUserFavorites(ctx context.Context, userID int32) ([]Recipe
 }
 
 const listUserRecipes = `-- name: ListUserRecipes :many
-SELECT id, user_id, title, description, instructions, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+SELECT id, user_id, title, description, type, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -596,7 +476,7 @@ func (q *Queries) ListUserRecipes(ctx context.Context, userID pgtype.Int4) ([]Re
 			&i.UserID,
 			&i.Title,
 			&i.Description,
-			&i.Instructions,
+			&i.Type,
 			&i.AssetID,
 			&i.PrepTimeMinutes,
 			&i.Servings,
@@ -612,22 +492,6 @@ func (q *Queries) ListUserRecipes(ctx context.Context, userID pgtype.Int4) ([]Re
 		return nil, err
 	}
 	return items, nil
-}
-
-const tagRecipe = `-- name: TagRecipe :exec
-INSERT INTO recipe_tags (recipe_id, tag_id)
-VALUES ($1, $2)
-ON CONFLICT DO NOTHING
-`
-
-type TagRecipeParams struct {
-	RecipeID int32 `json:"recipeId"`
-	TagID    int32 `json:"tagId"`
-}
-
-func (q *Queries) TagRecipe(ctx context.Context, arg TagRecipeParams) error {
-	_, err := q.db.Exec(ctx, tagRecipe, arg.RecipeID, arg.TagID)
-	return err
 }
 
 const unfavoriteRecipe = `-- name: UnfavoriteRecipe :exec
@@ -665,7 +529,7 @@ const updateRecipe = `-- name: UpdateRecipe :exec
 UPDATE recipes SET
   title = $2,
   description = $3,
-  instructions = $4,
+  type = $4,
   asset_id = $5,
   prep_time_minutes = $6,
   servings = $7,
@@ -678,7 +542,7 @@ type UpdateRecipeParams struct {
 	ID              int32       `json:"id"`
 	Title           string      `json:"title"`
 	Description     string      `json:"description"`
-	Instructions    string      `json:"instructions"`
+	Type            int32       `json:"type"`
 	AssetID         string      `json:"assetId"`
 	PrepTimeMinutes pgtype.Int4 `json:"prepTimeMinutes"`
 	Servings        pgtype.Int4 `json:"servings"`
@@ -690,7 +554,7 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg UpdateRecipeParams) erro
 		arg.ID,
 		arg.Title,
 		arg.Description,
-		arg.Instructions,
+		arg.Type,
 		arg.AssetID,
 		arg.PrepTimeMinutes,
 		arg.Servings,

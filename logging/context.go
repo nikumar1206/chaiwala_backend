@@ -8,6 +8,6 @@ const (
 	Method    ContextKey = "method"
 	Path      ContextKey = "path"
 	SourceIP  ContextKey = "source_ip"
-	Username  ContextKey = "username"
+	Email     ContextKey = "email"
 	UserId    ContextKey = "userId"
 )

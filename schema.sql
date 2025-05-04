@@ -1,6 +1,5 @@
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     bio TEXT NOT NULL,
@@ -13,7 +12,7 @@ CREATE TABLE recipes (
     user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
     title VARCHAR(100) NOT NULL,
     description TEXT NOT NULL,
-    instructions TEXT NOT NULL,
+    type INTEGER NOT NULL,
     asset_id TEXT NOT NULL,
     prep_time_minutes INTEGER,
     servings INTEGER,
@@ -28,32 +27,6 @@ CREATE TABLE recipe_steps (
     step_number INTEGER NOT NULL,
     description TEXT NOT NULL,
     asset_id TEXT
-);
-
-CREATE TABLE ingredients (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) UNIQUE NOT NULL
-);
-
--- Join table for recipe ingredients
-CREATE TABLE recipe_ingredients (
-    id SERIAL PRIMARY KEY,
-    recipe_id INTEGER REFERENCES recipes (id) ON DELETE CASCADE,
-    ingredient_id INTEGER REFERENCES ingredients (id),
-    quantity VARCHAR(50) -- e.g. "2 tsp", "1 cup"
-);
-
--- Tags table
-CREATE TABLE tags (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
-);
-
--- Join table for recipe tags
-CREATE TABLE recipe_tags (
-    recipe_id INTEGER REFERENCES recipes (id) ON DELETE CASCADE,
-    tag_id INTEGER REFERENCES tags (id) ON DELETE CASCADE,
-    PRIMARY KEY (recipe_id, tag_id)
 );
 
 CREATE TABLE recipe_comments (
@@ -76,10 +49,6 @@ CREATE TABLE favorites (
 CREATE INDEX idx_recipes_user_id ON recipes (user_id);
 
 CREATE INDEX idx_favorites_user_id ON favorites (user_id);
-
-CREATE INDEX idx_recipe_tags_recipe_id ON recipe_tags (recipe_id);
-
-CREATE INDEX idx_recipe_ingredients_recipe_id ON recipe_ingredients (recipe_id);
 
 CREATE INDEX idx_recipe_comments_recipe_id ON recipe_comments (recipe_id);
 

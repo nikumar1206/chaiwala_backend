@@ -2,7 +2,6 @@ package users
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -44,9 +43,8 @@ func registerUser(dbConn *db.Queries) fiber.Handler {
 		}
 
 		usr, err := dbConn.CreateUser(c.Context(), db.CreateUserParams{
-			Username:     u.Username,
 			PasswordHash: string(hash),
-			Email:        u.Username + "@gmail.com",
+			Email:        u.Email,
 		})
 		if err != nil {
 
@@ -64,7 +62,7 @@ func registerUser(dbConn *db.Queries) fiber.Handler {
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
-		at, rt, exp, err := jwt.GenerateTokens(usr.Username, usr.ID)
+		at, rt, exp, err := jwt.GenerateTokens(usr.Email, usr.ID)
 		if err != nil {
 			c.Status(500)
 			return c.JSON(common.Error{
@@ -89,33 +87,22 @@ func loginUser(dbConn *db.Queries) fiber.Handler {
 		if err := c.Bind().JSON(u); err != nil {
 			return err
 		}
-		usr, err := dbConn.GetUserByUsername(c.Context(), u.Username)
+		usr, err := dbConn.GetUserByEmail(c.Context(), u.Email)
 		if err != nil {
 			slog.ErrorContext(c.Context(), err.Error())
-			fmt.Print(err)
 			c.Status(http.StatusNotFound)
-			return c.JSON(common.Error{
-				Message:   "User not found.",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusNotFound, "User not found")
 		}
 
 		err = bcrypt.CompareHashAndPassword([]byte(usr.PasswordHash), []byte(u.Password))
 		if err != nil {
 			c.Status(http.StatusUnauthorized)
-			return c.JSON(common.Error{
-				Message:   "Incorrect password",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusUnauthorized, "Incorrect password")
 		}
 
-		at, rt, exp, err := jwt.GenerateTokens(usr.Username, usr.ID)
+		at, rt, exp, err := jwt.GenerateTokens(usr.Email, usr.ID)
 		if err != nil {
-			c.Status(500)
-			return c.JSON(common.Error{
-				Message:   "Could not generate a JWT",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Could not generate a JWT")
 		}
 
 		return c.JSON(
@@ -137,7 +124,7 @@ func refreshRoute(dbConn *db.Queries) fiber.Handler {
 		claims := c.Locals("claims").(jwt.Claims)
 
 		// todo(nick): need to revoke previous Refresh
-		newAccess, newRefresh, exp, err := jwt.GenerateTokens(claims.Username, claims.UserID)
+		newAccess, newRefresh, exp, err := jwt.GenerateTokens(claims.Email, claims.UserID)
 		if err != nil {
 			slog.ErrorContext(c.Context(), err.Error())
 			return common.SendErrorResponse(c, http.StatusInternalServerError, "Could not generate JWT")

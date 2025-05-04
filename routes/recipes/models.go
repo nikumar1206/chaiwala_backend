@@ -1,5 +1,47 @@
 package recipes
 
+type TeaType int32
+
+const (
+	TTBlack TeaType = iota
+	TTGreen
+	TTWhite
+	TTOolong
+	TTPuErh
+	TTYellow
+	TTHerbal
+	TTRooibos
+	TTYerbaMate
+	TTMatcha
+	TTChai
+	TTFlavored
+	TTBlooming
+)
+
+var TEANAMES = []string{
+	"Black",
+	"Green",
+	"White",
+	"Oolong",
+	"Pu-erh",
+	"Yellow",
+	"Herbal",
+	"Rooibos",
+	"Yerba Mate",
+	"Matcha",
+	"Chai",
+	"Flavored",
+	"Blooming",
+}
+
+func (t TeaType) String() string {
+	if t < 0 || int(t) >= len(TEANAMES) {
+		return "Unknown"
+	}
+
+	return TEANAMES[t]
+}
+
 type Step struct {
 	StepNumber  int    `json:"stepNumber,omitempty"`
 	Description string `json:"description,omitempty"`
