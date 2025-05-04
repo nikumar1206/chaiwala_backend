@@ -63,11 +63,12 @@ func main() {
 	defer conn.Close(context.Background())
 
 	dbConn := db.New(conn)
+
 	s3Client := s3.New(context.Background(), ac.AWS_REGION, ac.S3_BUCKET_NAME)
 
 	users.BuildAuthRouter(app, dbConn)
 	users.BuildRouter(app, dbConn)
-	recipes.BuildRouter(app, dbConn)
+	recipes.BuildRouter(app, conn, dbConn)
 	comments.BuildRouter(app, dbConn)
 	favorites.BuildRouter(app, dbConn)
 	assets.BuildRouter(app, s3Client)

@@ -177,6 +177,16 @@ func (q *Queries) DeleteRecipe(ctx context.Context, id int32) error {
 	return err
 }
 
+const deleteRecipeStep = `-- name: DeleteRecipeStep :exec
+DELETE FROM recipe_steps
+WHERE id = $1
+`
+
+func (q *Queries) DeleteRecipeStep(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, deleteRecipeStep, id)
+	return err
+}
+
 const favoriteRecipe = `-- name: FavoriteRecipe :exec
 INSERT INTO favorites (user_id, recipe_id)
 VALUES ($1, $2)
@@ -215,6 +225,79 @@ func (q *Queries) GetRecipe(ctx context.Context, id int32) (Recipe, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getRecipeStep = `-- name: GetRecipeStep :one
+SELECT id, recipe_id, step_number, description, asset_id FROM recipe_steps
+WHERE id = $1
+`
+
+func (q *Queries) GetRecipeStep(ctx context.Context, id int32) (RecipeStep, error) {
+	row := q.db.QueryRow(ctx, getRecipeStep, id)
+	var i RecipeStep
+	err := row.Scan(
+		&i.ID,
+		&i.RecipeID,
+		&i.StepNumber,
+		&i.Description,
+		&i.AssetID,
+	)
+	return i, err
+}
+
+const getRecipeStepByNumber = `-- name: GetRecipeStepByNumber :one
+SELECT id, recipe_id, step_number, description, asset_id FROM recipe_steps
+WHERE recipe_id = $1 AND step_number = $2
+`
+
+type GetRecipeStepByNumberParams struct {
+	RecipeID   pgtype.Int4 `json:"recipeId"`
+	StepNumber int32       `json:"stepNumber"`
+}
+
+func (q *Queries) GetRecipeStepByNumber(ctx context.Context, arg GetRecipeStepByNumberParams) (RecipeStep, error) {
+	row := q.db.QueryRow(ctx, getRecipeStepByNumber, arg.RecipeID, arg.StepNumber)
+	var i RecipeStep
+	err := row.Scan(
+		&i.ID,
+		&i.RecipeID,
+		&i.StepNumber,
+		&i.Description,
+		&i.AssetID,
+	)
+	return i, err
+}
+
+const getRecipeStepsByRecipe = `-- name: GetRecipeStepsByRecipe :many
+SELECT id, recipe_id, step_number, description, asset_id FROM recipe_steps
+WHERE recipe_id = $1
+ORDER BY step_number
+`
+
+func (q *Queries) GetRecipeStepsByRecipe(ctx context.Context, recipeID pgtype.Int4) ([]RecipeStep, error) {
+	rows, err := q.db.Query(ctx, getRecipeStepsByRecipe, recipeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RecipeStep
+	for rows.Next() {
+		var i RecipeStep
+		if err := rows.Scan(
+			&i.ID,
+			&i.RecipeID,
+			&i.StepNumber,
+			&i.Description,
+			&i.AssetID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUser = `-- name: GetUser :one
@@ -559,6 +642,32 @@ func (q *Queries) UpdateRecipe(ctx context.Context, arg UpdateRecipeParams) erro
 		arg.PrepTimeMinutes,
 		arg.Servings,
 		arg.IsPublic,
+	)
+	return err
+}
+
+const updateRecipeStep = `-- name: UpdateRecipeStep :exec
+UPDATE recipe_steps
+SET
+  step_number = $2,
+  description = $3,
+  asset_id = $4
+WHERE id = $1
+`
+
+type UpdateRecipeStepParams struct {
+	ID          int32       `json:"id"`
+	StepNumber  int32       `json:"stepNumber"`
+	Description string      `json:"description"`
+	AssetID     pgtype.Text `json:"assetId"`
+}
+
+func (q *Queries) UpdateRecipeStep(ctx context.Context, arg UpdateRecipeStepParams) error {
+	_, err := q.db.Exec(ctx, updateRecipeStep,
+		arg.ID,
+		arg.StepNumber,
+		arg.Description,
+		arg.AssetID,
 	)
 	return err
 }

@@ -1,5 +1,7 @@
 package recipes
 
+import "ChaiwalaBackend/db"
+
 type TeaType int32
 
 const (
@@ -48,10 +50,16 @@ type Step struct {
 	AssetId     string `json:"assetId,omitempty"`
 }
 
+type SavedStep struct {
+	ID int `json:"id"`
+	Step
+}
+
 type CreateRecipeBody struct {
 	Title           string `json:"title"`
 	Description     string `json:"description"`
 	Instructions    string `json:"instructions"`
+	TeaType         int    `json:"teaType"`
 	Steps           []Step `json:"steps"`
 	AssetId         string `json:"assetId"`
 	PrepTimeMinutes int32  `json:"prepTimeMinutes"`
@@ -60,11 +68,22 @@ type CreateRecipeBody struct {
 }
 
 type UpdateRecipeBody struct {
-	Title           string `json:"title"`
-	Description     string `json:"description"`
-	Instructions    string `json:"instructions"`
-	AssetId         string `json:"assetId"`
-	PrepTimeMinutes int32  `json:"prepTimeMinutes"`
-	Servings        int32  `json:"servings"`
-	IsPublic        bool   `json:"isPublic"`
+	Title           string          `json:"title"`
+	Description     string          `json:"description"`
+	Instructions    string          `json:"instructions"`
+	Steps           []db.RecipeStep `json:"steps"`
+	TeaType         int             `json:"teaType"`
+	AssetID         string          `json:"assetId"`
+	PrepTimeMinutes int32           `json:"prepTimeMinutes"`
+	Servings        int32           `json:"servings"`
+	IsPublic        bool            `json:"isPublic"`
+}
+
+type GetRecipe struct {
+	ID             int32           `json:"id"`
+	Recipe         db.Recipe       `json:"recipe"`
+	CreatedBy      db.User         `json:"createdBy"`
+	Steps          []db.RecipeStep `json:"steps"`
+	CommentsCount  int32           `json:"commentsCount"`
+	FavoritesCount int32           `json:"favoritesCount"`
 }

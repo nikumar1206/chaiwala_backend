@@ -8,18 +8,20 @@ import (
 	"ChaiwalaBackend/db"
 	logger "ChaiwalaBackend/logging"
 	common "ChaiwalaBackend/routes"
+	"ChaiwalaBackend/utils"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func BuildRouter(app *fiber.App, dbConn *db.Queries) *fiber.Router {
+func BuildRouter(app *fiber.App, conn *pgx.Conn, dbConn *db.Queries) *fiber.Router {
 	recipeRouter := app.Group("/recipes")
 
 	recipeRouter.Get("", listPublicRecipes(dbConn))
 	recipeRouter.Get("/:recipeId", getRecipeByID(dbConn))
-	recipeRouter.Post("", createRecipe(dbConn))
-	recipeRouter.Put("/:recipeId", updateRecipe(dbConn))
+	recipeRouter.Post("", createRecipe(conn))
+	recipeRouter.Put("/:recipeId", updateRecipe(conn))
 	recipeRouter.Delete("/:recipeId", deleteRecipe(dbConn))
 
 	recipeRouter.Get("/:recipeId/comments", listRecipeComments(dbConn))
@@ -52,11 +54,36 @@ func getRecipeByID(dbConn *db.Queries) fiber.Handler {
 		if err != nil {
 			return common.SendErrorResponse(c, http.StatusNotFound, "Recipe not found")
 		}
-		return c.JSON(recipe)
+
+		steps, err := dbConn.GetRecipeStepsByRecipe(c.Context(), pgtype.Int4{Int32: recipe.ID, Valid: true})
+		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to fetch recipe steps")
+		}
+
+		if steps == nil {
+			steps = []db.RecipeStep{}
+		}
+
+		user, err := dbConn.GetUser(c.Context(), recipe.UserID.Int32)
+		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to fetch user")
+		}
+		r := GetRecipe{
+			Recipe:         recipe,
+			Steps:          steps,
+			ID:             recipe.ID,
+			CommentsCount:  0,
+			FavoritesCount: 0,
+			CreatedBy:      user,
+		}
+
+		return c.JSON(r)
 	}
 }
 
-func createRecipe(dbConn *db.Queries) fiber.Handler {
+func createRecipe(conn *pgx.Conn) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		var r CreateRecipeBody
 		if err := c.Bind().JSON(&r); err != nil {
@@ -65,12 +92,22 @@ func createRecipe(dbConn *db.Queries) fiber.Handler {
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
+
+		tx, err := conn.Begin(c.Context())
+		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Sorry, something went wrong. Please try again later.")
+		}
+
+		defer utils.LogThrowable(c.Context(), tx.Rollback(c.Context()))
+
+		q := db.New(tx)
 		userId := c.Locals(logger.UserId).(int32)
-		recipe, err := dbConn.CreateRecipe(c.Context(), db.CreateRecipeParams{
+		recipe, err := q.CreateRecipe(c.Context(), db.CreateRecipeParams{
 			UserID:          pgtype.Int4{Int32: userId, Valid: true},
 			Title:           r.Title,
 			Description:     r.Description,
-			Type:            int32(TTChai),
+			Type:            int32(r.TeaType),
 			AssetID:         r.AssetId,
 			PrepTimeMinutes: pgtype.Int4{Int32: r.PrepTimeMinutes, Valid: true},
 			Servings:        pgtype.Int4{Int32: r.Servings, Valid: true},
@@ -83,43 +120,76 @@ func createRecipe(dbConn *db.Queries) fiber.Handler {
 				RequestId: c.GetRespHeader("X-Request-ID"),
 			})
 		}
+
+		for _, step := range r.Steps {
+			_, err := q.AddRecipeStep(c.Context(), db.AddRecipeStepParams{
+				RecipeID:    pgtype.Int4{Int32: recipe.ID, Valid: true},
+				StepNumber:  int32(step.StepNumber),
+				Description: step.Description,
+				AssetID:     pgtype.Text{String: step.AssetId, Valid: true},
+			})
+			if err != nil {
+				slog.ErrorContext(c.Context(), err.Error())
+				return c.Status(http.StatusInternalServerError).JSON(common.Error{
+					Message:   "Failed to create recipe",
+					RequestId: c.GetRespHeader("X-Request-ID"),
+				})
+			}
+		}
+		tx.Commit(c.Context())
 		slog.InfoContext(c.Context(), "success")
 		return c.Status(http.StatusCreated).JSON(recipe)
 	}
 }
 
-func updateRecipe(dbConn *db.Queries) fiber.Handler {
+func updateRecipe(conn *pgx.Conn) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("recipeId"))
 		if err != nil {
-			return c.Status(http.StatusBadRequest).JSON(common.Error{
-				Message:   "Invalid recipe ID",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusBadRequest, "Invalid recipe ID")
 		}
 		var r UpdateRecipeBody
 		if err := c.Bind().JSON(&r); err != nil {
-			return c.Status(http.StatusBadRequest).JSON(common.Error{
-				Message:   "Invalid input",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusBadRequest, "Invalid input")
 		}
-		err = dbConn.UpdateRecipe(c.Context(), db.UpdateRecipeParams{
+		tx, err := conn.Begin(c.Context())
+		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Sorry, something went wrong. Please try again later.")
+		}
+		defer utils.LogThrowable(c.Context(), tx.Rollback(c.Context()))
+		q := db.New(tx)
+
+		err = q.UpdateRecipe(c.Context(), db.UpdateRecipeParams{
 			ID:              int32(id),
 			Title:           r.Title,
 			Description:     r.Description,
-			Type:            int32(TTBlack),
-			AssetID:         r.AssetId,
+			Type:            int32(r.TeaType),
+			AssetID:         r.AssetID,
 			PrepTimeMinutes: pgtype.Int4{Int32: r.PrepTimeMinutes, Valid: true},
 			Servings:        pgtype.Int4{Int32: r.Servings, Valid: true},
 			IsPublic:        pgtype.Bool{Bool: r.IsPublic, Valid: true},
 		})
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(common.Error{
-				Message:   "Failed to update recipe",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to update recipe")
 		}
+
+		for _, step := range r.Steps {
+			err := q.UpdateRecipeStep(c.Context(), db.UpdateRecipeStepParams{
+				ID:          int32(step.ID),
+				StepNumber:  int32(step.StepNumber),
+				Description: step.Description,
+				AssetID:     step.AssetID,
+			})
+			if err != nil {
+				return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to update recipe step")
+			}
+		}
+		tx.Commit(c.Context())
+		slog.InfoContext(c.Context(), "Recipe updated successfully")
 		return c.SendStatus(http.StatusNoContent)
 	}
 }
@@ -128,18 +198,15 @@ func deleteRecipe(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		id, err := strconv.Atoi(c.Params("recipeId"))
 		if err != nil {
-			return c.Status(http.StatusBadRequest).JSON(common.Error{
-				Message:   "Invalid recipe ID",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusBadRequest, "Invalid recipe ID")
 		}
 		err = dbConn.DeleteRecipe(c.Context(), int32(id))
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(common.Error{
-				Message:   "Failed to delete recipe",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to delete recipe")
 		}
+		slog.InfoContext(c.Context(), "Recipe deleted successfully")
 		return c.SendStatus(http.StatusNoContent)
 	}
 }
@@ -148,18 +215,14 @@ func listRecipeComments(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		recipeID, err := strconv.Atoi(c.Params("recipeId"))
 		if err != nil {
-			return c.Status(http.StatusBadRequest).JSON(common.Error{
-				Message:   "Invalid recipe ID",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusBadRequest, "Invalid recipe ID")
 		}
 
 		comments, err := dbConn.ListComments(c.Context(), pgtype.Int4{Int32: int32(recipeID), Valid: true})
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(common.Error{
-				Message:   "Failed to fetch comments",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to fetch comments")
 		}
 		return c.JSON(comments)
 	}

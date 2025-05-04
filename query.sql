@@ -61,6 +61,32 @@ INSERT INTO recipe_steps (
 )
 RETURNING *;
 
+-- name: UpdateRecipeStep :exec
+UPDATE recipe_steps
+SET
+  step_number = $2,
+  description = $3,
+  asset_id = $4
+WHERE id = $1;
+
+
+-- name: DeleteRecipeStep :exec
+DELETE FROM recipe_steps
+WHERE id = $1;
+
+-- name: GetRecipeStep :one
+SELECT * FROM recipe_steps
+WHERE id = $1;
+
+-- name: GetRecipeStepByNumber :one
+SELECT * FROM recipe_steps
+WHERE recipe_id = $1 AND step_number = $2;
+
+-- name: GetRecipeStepsByRecipe :many
+SELECT * FROM recipe_steps
+WHERE recipe_id = $1
+ORDER BY step_number;
+
 -- name: ListRecipeSteps :many
 SELECT * FROM recipe_steps
 WHERE recipe_id = $1

@@ -47,7 +47,7 @@ type RecipeStep struct {
 type User struct {
 	ID           int32            `json:"id"`
 	Email        string           `json:"email"`
-	PasswordHash string           `json:"passwordHash"`
+	PasswordHash string           `json:"-"`
 	Bio          string           `json:"bio"`
 	AvatarUrl    string           `json:"avatarUrl"`
 	CreatedAt    pgtype.Timestamp `json:"createdAt"`
