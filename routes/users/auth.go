@@ -47,31 +47,21 @@ func registerUser(dbConn *db.Queries) fiber.Handler {
 			Email:        u.Email,
 		})
 		if err != nil {
-
+			slog.ErrorContext(c.Context(), err.Error())
 			var e *pgconn.PgError
 			if errors.As(err, &e) && e.Code == pgerrcode.UniqueViolation {
-				c.Status(409)
-				return c.JSON(common.Error{
-					Message:   "Username already taken.",
-					RequestId: c.GetRespHeader("X-Request-ID"),
-				})
+				return common.SendErrorResponse(c, http.StatusConflict, "Username already taken")
 			}
-			c.Status(500)
-			return c.JSON(common.Error{
-				Message:   "User could not be created",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "User could not be created")
 		}
+
 		at, rt, exp, err := jwt.GenerateTokens(usr.Email, usr.ID)
 		if err != nil {
-			c.Status(500)
-			return c.JSON(common.Error{
-				Message:   "Could not generate a JWT",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Could not generate JWT")
 		}
-		c.Status(200)
-		return c.JSON(GeneratedJWTResponse{
+		slog.InfoContext(c.Context(), "User created successfully")
+		return c.Status(200).JSON(GeneratedJWTResponse{
 			AccessToken:  at,
 			RefreshToken: rt,
 			ExpiresIn:    exp.UnixMilli(),

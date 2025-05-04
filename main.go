@@ -18,6 +18,7 @@ import (
 	"ChaiwalaBackend/routes/users"
 	"ChaiwalaBackend/utils"
 
+	"github.com/dusted-go/logging/prettylog"
 	"github.com/gofiber/fiber/v3"
 	"github.com/jackc/pgx/v5"
 )
@@ -96,8 +97,9 @@ func getLoggerHandler(ac *AppConfig) slog.Handler {
 		})
 	}
 
-	return slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level:     ac.LOG_LEVEL,
-		AddSource: true,
+	return prettylog.NewHandler(&slog.HandlerOptions{
+		Level:       ac.LOG_LEVEL,
+		AddSource:   true,
+		ReplaceAttr: nil,
 	})
 }
