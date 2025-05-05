@@ -30,11 +30,50 @@ func BuildRouter(app *fiber.App, conn *pgx.Conn, dbConn *db.Queries) *fiber.Rout
 
 func listPublicRecipes(dbConn *db.Queries) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		recipes, err := dbConn.ListPublicRecipes(c.Context())
+		qParams := c.Queries()
+
+		offset := qParams["offset"]
+		limit := qParams["limit"]
+
+		if offset == "" {
+			offset = "0"
+		}
+
+		if limit == "" {
+			limit = "10"
+		}
+
+		offsetInt, err := strconv.Atoi(offset)
+		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusUnprocessableEntity, "Invalid offset")
+		}
+
+		if offsetInt < 0 {
+			return common.SendErrorResponse(c, http.StatusBadRequest, "Offset must be greater than or equal to 0")
+		}
+
+		limitInt, err := strconv.Atoi(limit)
+		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusUnprocessableEntity, "Invalid limit")
+		}
+		if limitInt < 1 {
+			return common.SendErrorResponse(c, http.StatusBadRequest, "Limit must be greater than 0")
+		}
+		if limitInt > 500 {
+			return common.SendErrorResponse(c, http.StatusBadRequest, "Limit must be less than 500")
+		}
+
+		recipes, err := dbConn.ListPublicRecipesPaginated(c.Context(), db.ListPublicRecipesPaginatedParams{
+			Limit:  int32(limitInt),
+			Offset: int32(offsetInt),
+		})
 		if err != nil {
 			slog.ErrorContext(c.Context(), err.Error())
 			return common.SendErrorResponse(c, http.StatusInternalServerError, "Failed to fetch recipes")
 		}
+
 		if recipes == nil {
 			return c.JSON([]db.Recipe{})
 		}

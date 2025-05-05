@@ -19,6 +19,13 @@ SELECT * FROM recipes
 WHERE is_public = true
 ORDER BY created_at DESC;
 
+-- name: ListPublicRecipesPaginated :many
+SELECT * FROM recipes
+WHERE is_public = true
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
+
+
 -- name: GetRecipe :one
 SELECT * FROM recipes
 WHERE id = $1;

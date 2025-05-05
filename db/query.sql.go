@@ -467,6 +467,50 @@ func (q *Queries) ListPublicRecipes(ctx context.Context) ([]Recipe, error) {
 	return items, nil
 }
 
+const listPublicRecipesPaginated = `-- name: ListPublicRecipesPaginated :many
+SELECT id, user_id, title, description, type, asset_id, prep_time_minutes, servings, is_public, created_at, updated_at FROM recipes
+WHERE is_public = true
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListPublicRecipesPaginatedParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListPublicRecipesPaginated(ctx context.Context, arg ListPublicRecipesPaginatedParams) ([]Recipe, error) {
+	rows, err := q.db.Query(ctx, listPublicRecipesPaginated, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Recipe
+	for rows.Next() {
+		var i Recipe
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Title,
+			&i.Description,
+			&i.Type,
+			&i.AssetID,
+			&i.PrepTimeMinutes,
+			&i.Servings,
+			&i.IsPublic,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRecipeSteps = `-- name: ListRecipeSteps :many
 SELECT id, recipe_id, step_number, description, asset_id FROM recipe_steps
 WHERE recipe_id = $1
