@@ -31,6 +31,7 @@ type AppConfig struct {
 	AWS_SECRET_ACCESS_KEY string
 	S3_BUCKET_NAME        string
 	LOG_LEVEL             slog.Level
+	POSTGRES_URL          string
 }
 
 func newAppConfig() *AppConfig {
@@ -43,6 +44,7 @@ func newAppConfig() *AppConfig {
 		AWS_ACCESS_KEY_ID:     os.Getenv("AWS_ACCESS_KEY_ID"),
 		AWS_SECRET_ACCESS_KEY: os.Getenv("AWS_SECRET_ACCESS_KEY"),
 		S3_BUCKET_NAME:        os.Getenv("S3_BUCKET_NAME"),
+		POSTGRES_URL:          os.Getenv("POSTGRES_URL"),
 		LOG_LEVEL:             slog.Level(logLevel),
 	}
 }
@@ -59,7 +61,7 @@ func main() {
 	app.Use(middlewares.Timing())
 	app.Use(middlewares.JWT())
 
-	conn := utils.Must(pgx.Connect(context.Background(), "user=nikhil dbname=chaiwala sslmode=verify-full"))
+	conn := utils.Must(pgx.Connect(context.Background(), ac.POSTGRES_URL))
 	//nolint:errcheck
 	defer conn.Close(context.Background())
 
