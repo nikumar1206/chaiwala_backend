@@ -22,6 +22,8 @@ func SetContext() fiber.Handler {
 		ctx = context.WithValue(ctx, logger.SourceIP, c.IP())
 		// set user related context settings in jwt middleware
 		c.SetContext(ctx)
+		c.Response().Header.Set("X-Request-ID", requestId)
+
 		return c.Next()
 	}
 }

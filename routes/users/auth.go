@@ -35,11 +35,8 @@ func registerUser(dbConn *db.Queries) fiber.Handler {
 
 		hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), 0)
 		if err != nil {
-			c.Status(500)
-			return c.JSON(common.Error{
-				Message:   "User could not be created",
-				RequestId: c.GetRespHeader("X-Request-ID"),
-			})
+			slog.ErrorContext(c.Context(), err.Error())
+			return common.SendErrorResponse(c, http.StatusInternalServerError, "Could not hash password.")
 		}
 
 		usr, err := dbConn.CreateUser(c.Context(), db.CreateUserParams{
@@ -80,18 +77,18 @@ func loginUser(dbConn *db.Queries) fiber.Handler {
 		usr, err := dbConn.GetUserByEmail(c.Context(), u.Email)
 		if err != nil {
 			slog.ErrorContext(c.Context(), err.Error())
-			c.Status(http.StatusNotFound)
 			return common.SendErrorResponse(c, http.StatusNotFound, "User not found")
 		}
 
 		err = bcrypt.CompareHashAndPassword([]byte(usr.PasswordHash), []byte(u.Password))
 		if err != nil {
-			c.Status(http.StatusUnauthorized)
+			slog.ErrorContext(c.Context(), err.Error())
 			return common.SendErrorResponse(c, http.StatusUnauthorized, "Incorrect password")
 		}
 
 		at, rt, exp, err := jwt.GenerateTokens(usr.Email, usr.ID)
 		if err != nil {
+			slog.ErrorContext(c.Context(), err.Error())
 			return common.SendErrorResponse(c, http.StatusInternalServerError, "Could not generate a JWT")
 		}
 
